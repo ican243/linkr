@@ -1,0 +1,461 @@
+/*
+ * king 커스텀 테마
+ * Bootswatch(Flatly/Lux) 위에 얹어서 폰트/색상/여백/그림자만 다듬는 레이어.
+ * 부트스트랩 기본 클래스는 그대로 쓰고, 이 파일에서 시각적 디테일만 덮어씀.
+ */
+
+:root {
+    --king-font: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+        system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Malgun Gothic', sans-serif;
+
+    --king-primary: #4f46e5;
+    --king-primary-dark: #4338ca;
+    --king-primary-soft: #eef2ff;
+    --king-ink: #111827;
+    --king-muted: #6b7280;
+    --king-bg: #f7f7fb;
+    --king-surface: #ffffff;
+    --king-border: #e5e7eb;
+
+    --king-radius-sm: 10px;
+    --king-radius: 16px;
+    --king-radius-lg: 24px;
+
+    --king-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 8px 24px -10px rgba(16, 24, 40, .12);
+    --king-shadow-hover: 0 14px 32px -12px rgba(79, 70, 229, .35);
+}
+
+body {
+    font-family: var(--king-font);
+    background: var(--king-bg);
+    color: var(--king-ink);
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+a {
+    color: var(--king-primary);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--king-primary-dark);
+    text-decoration: underline;
+}
+
+hr {
+    border-color: var(--king-border);
+    opacity: 1;
+}
+
+::selection {
+    background: var(--king-primary-soft);
+    color: var(--king-primary-dark);
+}
+
+/* 부트스트랩 기본 파란 포커스 링 대신 브랜드 컬러로 통일 */
+.btn:focus,
+.btn:focus-visible,
+.form-check-input:focus,
+.page-link:focus {
+    box-shadow: 0 0 0 .2rem var(--king-primary-soft) !important;
+}
+
+/* -------------------- 네비게이션 -------------------- */
+
+.navbar {
+    background: rgba(255, 255, 255, .85) !important;
+    backdrop-filter: saturate(180%) blur(10px);
+    box-shadow: 0 1px 0 var(--king-border);
+    padding-top: .9rem;
+    padding-bottom: .9rem;
+}
+
+.navbar-brand {
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--king-ink) !important;
+}
+
+/* -------------------- 버튼 -------------------- */
+
+.btn {
+    border-radius: var(--king-radius-sm);
+    font-weight: 600;
+    padding: .55rem 1.15rem;
+    transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+
+.btn-primary {
+    background: var(--king-primary);
+    border-color: var(--king-primary);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .06);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background: var(--king-primary-dark);
+    border-color: var(--king-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--king-shadow-hover);
+}
+
+.btn-outline-primary {
+    border-color: var(--king-primary);
+    color: var(--king-primary);
+}
+
+.btn-outline-primary:hover {
+    background: var(--king-primary);
+    border-color: var(--king-primary);
+    transform: translateY(-1px);
+}
+
+.btn-link {
+    font-weight: 600;
+    text-decoration: none;
+}
+
+/* 나머지 버튼 변형들도 부트스트랩 기본 색 대신 중립 톤 + 통일된 라운드로 */
+.btn-secondary,
+.btn-dark {
+    background: var(--king-ink);
+    border-color: var(--king-ink);
+}
+
+.btn-secondary:hover,
+.btn-dark:hover {
+    background: #000;
+    border-color: #000;
+    transform: translateY(-1px);
+}
+
+.btn-outline-secondary,
+.btn-outline-dark {
+    border-color: var(--king-border);
+    color: var(--king-ink);
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-dark:hover {
+    background: var(--king-ink);
+    border-color: var(--king-ink);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.btn-outline-danger:hover,
+.btn-outline-light:hover {
+    transform: translateY(-1px);
+}
+
+.btn-group > .btn {
+    border-radius: var(--king-radius-sm) !important;
+    margin: 0 2px;
+}
+
+/* -------------------- 카드 -------------------- */
+
+.card {
+    background: var(--king-surface);
+    border: none;
+    border-radius: var(--king-radius);
+    box-shadow: var(--king-shadow);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--king-shadow-hover);
+}
+
+/* -------------------- 테이블 -------------------- */
+
+.table {
+    background: var(--king-surface);
+    border-radius: var(--king-radius);
+    overflow: hidden;
+}
+
+.table thead th {
+    background: var(--king-primary-soft);
+    color: var(--king-primary);
+    border-bottom: none;
+    font-weight: 700;
+    font-size: .85rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+
+.table > :not(caption) > * > * {
+    border-bottom-color: var(--king-border);
+}
+
+.table-hover > tbody > tr:hover > * {
+    background-color: var(--king-primary-soft);
+}
+
+/* -------------------- 폼 -------------------- */
+
+.form-control,
+.form-select {
+    border-radius: var(--king-radius-sm);
+    border-color: var(--king-border);
+    padding: .6rem .9rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--king-primary);
+    box-shadow: 0 0 0 .2rem var(--king-primary-soft);
+}
+
+/* -------------------- 알림(플래시 메시지) -------------------- */
+/* 부트스트랩 기본 두꺼운 테두리 대신, 옅은 배경 + 왼쪽 컬러 바 형태로 */
+
+.alert {
+    border: none;
+    border-left: 4px solid transparent;
+    border-radius: var(--king-radius-sm);
+    font-weight: 500;
+}
+
+.alert-success { border-left-color: #16a34a; }
+.alert-danger  { border-left-color: #dc2626; }
+.alert-warning { border-left-color: #d97706; }
+.alert-light   { border-left-color: var(--king-border); }
+
+/* -------------------- 페이지네이션 -------------------- */
+
+.pagination {
+    gap: .25rem;
+}
+
+.page-link {
+    border: none;
+    border-radius: var(--king-radius-sm) !important;
+    color: var(--king-ink);
+    font-weight: 600;
+}
+
+.page-link:hover {
+    background: var(--king-primary-soft);
+    color: var(--king-primary);
+}
+
+.page-item.active .page-link {
+    background: var(--king-primary);
+    color: #fff;
+}
+
+.page-item.disabled .page-link {
+    background: transparent;
+    color: #cbd5e1;
+}
+
+/* -------------------- 체크박스 / input-group -------------------- */
+
+.form-check-input {
+    border-color: var(--king-border);
+}
+
+.form-check-input:checked {
+    background-color: var(--king-primary);
+    border-color: var(--king-primary);
+}
+
+.input-group-text {
+    background: var(--king-bg);
+    border-color: var(--king-border);
+    border-radius: var(--king-radius-sm);
+    color: var(--king-muted);
+}
+
+/* -------------------- 배지 -------------------- */
+
+.badge {
+    border-radius: 999px;
+    font-weight: 600;
+    padding: .4em .8em;
+}
+
+/* -------------------- 랜딩페이지 히어로 -------------------- */
+
+.king-hero {
+    background: radial-gradient(120% 140% at 50% -10%, var(--king-primary-soft) 0%, transparent 60%);
+    border-radius: var(--king-radius-lg);
+    padding: 4.5rem 2rem;
+}
+
+.king-hero h1 {
+    font-size: clamp(2.25rem, 5vw, 3.5rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+}
+
+.king-hero .lead {
+    color: var(--king-muted);
+    font-size: 1.2rem;
+}
+
+.king-hero .form-control {
+    border-radius: 999px;
+    padding: .85rem 1.4rem;
+    box-shadow: var(--king-shadow);
+}
+
+.king-hero button[type='submit'] {
+    border-radius: 999px;
+    padding: .85rem 1.9rem;
+}
+
+/* 기능 소개 카드의 아이콘을 원형 배지 안에 라인 아이콘(SVG)으로 */
+.feature-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: var(--king-primary-soft);
+    color: var(--king-primary);
+}
+
+.feature-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* -------------------- 히어로 제품 목업 (실제 이미지 없이 CSS/SVG로 구성) -------------------- */
+
+.king-hero-visual {
+    position: relative;
+    max-width: 420px;
+    margin: 0 auto;
+    padding-bottom: 1.5rem;
+}
+
+.mockup-window {
+    background: var(--king-surface);
+    border-radius: var(--king-radius);
+    box-shadow: var(--king-shadow-hover);
+    overflow: hidden;
+}
+
+.mockup-bar {
+    display: flex;
+    gap: 6px;
+    padding: .8rem 1rem;
+    background: var(--king-bg);
+}
+
+.mockup-bar span {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--king-border);
+}
+
+.mockup-body {
+    padding: 1.5rem;
+}
+
+.mockup-url-row {
+    background: var(--king-bg);
+    border-radius: var(--king-radius-sm);
+    padding: .65rem .9rem;
+    font-size: .8rem;
+    color: var(--king-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mockup-arrow {
+    text-align: center;
+    color: var(--king-primary);
+    font-weight: 700;
+    margin: .5rem 0;
+}
+
+.mockup-url-short {
+    background: var(--king-primary-soft);
+    color: var(--king-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 700;
+    white-space: normal;
+}
+
+.mockup-url-short .badge {
+    background: var(--king-primary);
+    color: #fff;
+    font-size: .65rem;
+}
+
+.mockup-stats-card {
+    position: absolute;
+    right: 1rem;
+    bottom: -1rem;
+    background: var(--king-surface);
+    border-radius: var(--king-radius-sm);
+    box-shadow: var(--king-shadow-hover);
+    padding: .9rem 1.1rem;
+    width: 150px;
+}
+
+.mockup-stats-title {
+    font-size: .7rem;
+    color: var(--king-muted);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.mockup-stats-number {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--king-ink);
+    margin: .1rem 0 .4rem;
+}
+
+.mockup-sparkline {
+    width: 100%;
+    height: 24px;
+    color: var(--king-primary);
+}
+
+/* -------------------- 로그인/회원 사이드바 (user_layout) -------------------- */
+
+.king-sidebar {
+    background: var(--king-surface);
+    border-right: 1px solid var(--king-border);
+}
+
+.king-sidebar .nav-pills .nav-link {
+    color: var(--king-ink);
+    font-weight: 500;
+    border-radius: var(--king-radius-sm);
+    padding: .6rem .9rem;
+}
+
+.king-sidebar .nav-pills .nav-link:hover:not(.active) {
+    background: var(--king-bg);
+}
+
+.king-sidebar .nav-pills .nav-link.active {
+    background: var(--king-primary-soft);
+    color: var(--king-primary);
+    font-weight: 700;
+}
+
+/* -------------------- 푸터 -------------------- */
+
+footer {
+    background: transparent;
+    border-top-color: var(--king-border) !important;
+}
