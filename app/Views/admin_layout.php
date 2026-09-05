@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= esc($title ?? '관리자 - king') ?></title>
+    <title><?= esc($title ?? '관리자 - Linkr') ?></title>
     <!-- Bootswatch "Lux" 테마 (부트스트랩 5.3 호환, MIT 라이선스 무료) — 관리자 화면 전용 -->
     <link href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/lux/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
@@ -13,7 +13,7 @@
 <body class="bg-dark-subtle">
     <nav class="navbar navbar-dark bg-dark mb-4">
         <div class="container">
-            <span class="navbar-brand fw-bold">king 관리자</span>
+            <span class="navbar-brand fw-bold">Linkr 관리자</span>
             <?php if ($isAdminLoggedIn) : ?>
                 <div class="d-flex gap-2 ms-auto">
                     <a href="/admin/dashboard" class="btn btn-outline-light btn-sm">대시보드</a>

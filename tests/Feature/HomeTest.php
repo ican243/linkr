@@ -44,6 +44,6 @@ final class HomeTest extends CIUnitTestCase
         $result = $this->get('/about');
 
         $result->assertOK();
-        $result->assertSee('king은 이런 서비스예요');
+        $result->assertSee('Linkr는 이런 서비스예요');
     }
 }

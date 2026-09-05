@@ -7,7 +7,7 @@
 <div class="king-hero mb-5">
     <div class="row align-items-center g-5">
         <div class="col-lg-6 text-center text-lg-start">
-            <h1 class="mb-2">king</h1>
+            <h1 class="mb-2">Linkr</h1>
             <p class="lead">긴 주소를 짧은 주소로, 클릭 통계까지 한 번에.</p>
 
             <form action="<?= $isLoggedIn ? '/shorten' : '/demo-preview' ?>" method="post" class="d-flex flex-column flex-sm-row justify-content-center justify-content-lg-start gap-2 mt-4">
@@ -69,7 +69,7 @@
 
 <!-- 기능 소개 -->
 <div class="py-4">
-    <h2 class="text-center h4 mb-4">king이 제공하는 기능</h2>
+    <h2 class="text-center h4 mb-4">Linkr가 제공하는 기능</h2>
     <div class="row row-cols-1 row-cols-md-3 g-4">
         <div class="col">
             <div class="card h-100 p-4">

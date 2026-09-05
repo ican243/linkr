@@ -93,7 +93,7 @@ final class StatsTest extends CIUnitTestCase
             ->get("/links/{$code}/stats/export");
 
         $result->assertOK();
-        $result->assertHeader('Content-Disposition', 'attachment; filename="king_' . $code . '_clicks.csv"');
+        $result->assertHeader('Content-Disposition', 'attachment; filename="Linkr_' . $code . '_clicks.csv"');
         $body = (string) $result->response()->getBody();
         $this->assertStringContainsString('OldAgent', $body);
         $this->assertStringContainsString('RecentAgent', $body);

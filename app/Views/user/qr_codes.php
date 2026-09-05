@@ -32,7 +32,7 @@
                         <?= esc(base_url($link['short_code'])) ?>
                     </div>
                     <div class="d-flex gap-2 justify-content-center">
-                        <a href="<?= esc(base_url('qr/' . $link['short_code'])) ?>" download="king-qr-<?= esc($link['short_code']) ?>.png"
+                        <a href="<?= esc(base_url('qr/' . $link['short_code'])) ?>" download="Linkr-qr-<?= esc($link['short_code']) ?>.png"
                            class="btn btn-sm btn-outline-primary">다운로드</a>
                         <a href="/links/<?= esc($link['short_code']) ?>/stats" class="btn btn-sm btn-outline-secondary">통계</a>
                     </div>

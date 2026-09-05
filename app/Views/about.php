@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 
 <div class="text-center py-4">
-    <h1 class="fw-bold">king은 이런 서비스예요</h1>
+    <h1 class="fw-bold">Linkr는 이런 서비스예요</h1>
     <p class="lead text-muted">긴 주소를 짧게 줄이고, 클릭 통계까지 한 번에 관리하는 URL 단축 서비스입니다.</p>
 </div>
 
@@ -83,6 +83,6 @@
     <a href="/pricing" class="btn btn-outline-primary">요금제 보기</a>
 </div>
 
-<p class="text-muted small text-center mb-0">king은 개인 학습 목적으로 만들어지고 있는 프로젝트입니다.</p>
+<p class="text-muted small text-center mb-0">Linkr는 개인 학습 목적으로 만들어지고 있는 프로젝트입니다.</p>
 
 <?= $this->endSection() ?>

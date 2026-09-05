@@ -106,7 +106,7 @@ class Stats extends BaseController
         // 앞에 UTF-8 BOM(\xEF\xBB\xBF)을 붙여야 엑셀에서 열었을 때 한글이 안 깨짐.
         return $this->response
             ->setHeader('Content-Type', 'text/csv; charset=UTF-8')
-            ->setHeader('Content-Disposition', 'attachment; filename="king_' . $code . '_clicks.csv"')
+            ->setHeader('Content-Disposition', 'attachment; filename="Linkr_' . $code . '_clicks.csv"')
             ->setBody("\xEF\xBB\xBF" . $csv);
     }
 }

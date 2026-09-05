@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= esc($title ?? 'king') ?></title>
+    <title><?= esc($title ?? 'Linkr') ?></title>
     <!-- Bootswatch "Flatly" 테마 (부트스트랩 5.3 호환, MIT 라이선스 무료) -->
     <link href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/flatly/bootstrap.min.css" rel="stylesheet">
     <!-- 한글 웹폰트(Pretendard) + king 자체 테마(폰트/색상/여백/그림자 커스텀) -->
@@ -14,7 +14,7 @@
 <body>
     <nav class="navbar navbar-expand navbar-light bg-light border-bottom mb-4">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="/">king</a>
+            <a class="navbar-brand fw-bold" href="/">Linkr</a>
             <a href="/about" class="btn btn-link text-decoration-none">서비스소개</a>
             <a href="/pricing" class="btn btn-link text-decoration-none">요금제</a>
             <div class="ms-auto d-flex gap-2">
@@ -36,8 +36,8 @@
 
     <footer class="border-top py-4 text-center text-muted small">
         <div class="container">
-            <div class="mb-2">king &middot; <a href="/about">서비스소개</a> &middot; <a href="/pricing">요금제</a> &middot; <a href="/privacy">개인정보처리방침</a> &middot; <a href="/auth/login">로그인</a> &middot; <a href="/auth/register">회원가입</a></div>
-            <div>© <?= date('Y') ?> king. 개인 학습용 프로젝트입니다.</div>
+            <div class="mb-2">Linkr &middot; <a href="/about">서비스소개</a> &middot; <a href="/pricing">요금제</a> &middot; <a href="/privacy">개인정보처리방침</a> &middot; <a href="/auth/login">로그인</a> &middot; <a href="/auth/register">회원가입</a></div>
+            <div>© <?= date('Y') ?> Linkr. 개인 학습용 프로젝트입니다.</div>
         </div>
     </footer>
 

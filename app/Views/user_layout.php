@@ -9,7 +9,7 @@ $currentPath = uri_string();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= esc($title ?? 'king') ?></title>
+    <title><?= esc($title ?? 'Linkr') ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/flatly/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
     <link href="<?= base_url('assets/css/theme.css') ?>" rel="stylesheet">
@@ -18,7 +18,7 @@ $currentPath = uri_string();
     <div class="d-flex flex-column flex-md-row min-vh-100">
         <!-- 사이드바 -->
         <nav class="king-sidebar p-3 d-flex flex-column" style="width: 100%; max-width: 220px; flex-shrink: 0;">
-            <a href="/" class="d-block fw-bold fs-4 mb-4 text-decoration-none">king</a>
+            <a href="/" class="d-block fw-bold fs-4 mb-4 text-decoration-none">Linkr</a>
 
             <ul class="nav nav-pills flex-column mb-auto gap-1">
                 <li class="nav-item">
