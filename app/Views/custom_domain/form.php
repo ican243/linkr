@@ -26,6 +26,17 @@
                 현재는 <code>http://<?= esc($user['custom_domain']) ?></code> 로만 접속됩니다(https는 아직 지원 전).
                 A 레코드가 <code>1.234.79.116</code>으로 설정되어 있어야 실제로 접속이 됩니다.
             </p>
+            <?php if (! empty($exampleLink)) : ?>
+                <?php $exampleUrl = 'http://' . rtrim($user['custom_domain'], '/') . '/' . $exampleLink['short_code']; ?>
+                <p class="mb-3">
+                    예시 링크:
+                    <a href="<?= esc($exampleUrl) ?>" target="_blank" rel="noopener noreferrer"><?= esc($exampleUrl) ?></a>
+                </p>
+            <?php else : ?>
+                <p class="text-muted small mb-3">
+                    아직 만든 링크가 없습니다. 링크를 만들면 <code>http://<?= esc($user['custom_domain']) ?>/코드</code> 형태로 접속할 수 있습니다.
+                </p>
+            <?php endif ?>
         <?php endif ?>
 
         <?php if (! $user['custom_domain_verified']) : ?>

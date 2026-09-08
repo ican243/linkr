@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\LinkModel;
 use App\Models\UserModel;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
@@ -73,6 +74,8 @@ final class CustomDomainTest extends CIUnitTestCase
         $user = (new UserModel())->find($userId);
         $this->assertSame('mybrand-test.com', $user['custom_domain']);
         $this->assertSame(0, (int) $user['custom_domain_verified']);
+        // TXT 검증용 코드가 저장 시점에 같이 발급되어야 함 (인증 화면에서 안내해줘야 하므로)
+        $this->assertNotEmpty($user['custom_domain_verify_code']);
     }
 
     // DNS가 실제로 연결 안 된(우리 서버를 안 가리키는) 도메인은 인증 통과하면 안 됨.
@@ -89,6 +92,39 @@ final class CustomDomainTest extends CIUnitTestCase
 
         $user = (new UserModel())->find($userId);
         $this->assertSame(0, (int) $user['custom_domain_verified']);
+    }
+
+    public function testVerifiedDomainPageShowsExampleLinkWhenOneExists(): void
+    {
+        $userId = $this->createUser('exampleLinkTest@example.com');
+        (new UserModel())->update($userId, [
+            'custom_domain'          => 'example-link-test.com',
+            'custom_domain_verified' => true,
+        ]);
+        (new LinkModel())->insert([
+            'user_id'      => $userId,
+            'original_url' => 'https://example.com/some-target',
+            'short_code'   => 'exlinkcode',
+        ]);
+
+        $result = $this->withSession(['isLoggedIn' => true, 'user_id' => $userId])->get('/custom-domain');
+
+        $result->assertOK();
+        $result->assertSee('http://example-link-test.com/exlinkcode');
+    }
+
+    public function testVerifiedDomainPageShowsGuidanceWhenNoLinksYet(): void
+    {
+        $userId = $this->createUser('noLinksYet@example.com');
+        (new UserModel())->update($userId, [
+            'custom_domain'          => 'no-links-yet.com',
+            'custom_domain_verified' => true,
+        ]);
+
+        $result = $this->withSession(['isLoggedIn' => true, 'user_id' => $userId])->get('/custom-domain');
+
+        $result->assertOK();
+        $result->assertSee('아직 만든 링크가 없습니다');
     }
 
     public function testRemoveClearsDomainAndVerification(): void
