@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Models\LinkModel;
 use App\Models\UserModel;
 
 class CustomDomain extends BaseController
@@ -15,7 +16,17 @@ class CustomDomain extends BaseController
         $model = new UserModel();
         $user  = $model->find(session()->get('user_id'));
 
-        return view('custom_domain/form', ['user' => $user]);
+        // 인증 완료 화면에 실제 예시 링크를 보여주기 위해, 이 회원의 가장 최근 링크를 하나 가져옴.
+        // 아직 만든 링크가 없으면 null -> 화면에서 안내 문구로 대체함.
+        $exampleLink = null;
+        if (! empty($user['custom_domain_verified'])) {
+            $exampleLink = (new LinkModel())
+                ->where('user_id', $user['id'])
+                ->orderBy('created_at', 'DESC')
+                ->first();
+        }
+
+        return view('custom_domain/form', ['user' => $user, 'exampleLink' => $exampleLink]);
     }
 
     public function save()
