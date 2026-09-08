@@ -52,6 +52,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
     $routes->get('settings', 'Settings::form', ['filter' => 'adminAuth']);
     $routes->post('settings', 'Settings::update', ['filter' => 'adminAuth']);
     $routes->get('payments', 'Payments::index', ['filter' => 'adminAuth']);
+    $routes->post('payments/(:num)/test-complete', 'Payments::markTestCompleted/$1', ['filter' => 'adminAuth']);
     $routes->post('payments/(:num)/refund', 'Payments::refund/$1', ['filter' => 'adminAuth']);
     $routes->post('payments/(:num)/status', 'Payments::updateStatus/$1', ['filter' => 'adminAuth']);
     $routes->post('payments/(:num)/memo', 'Payments::updateMemo/$1', ['filter' => 'adminAuth']);

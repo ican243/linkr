@@ -172,8 +172,14 @@ $statusLabel = static fn (string $s) => ($statusBadges[$s]['label'] ?? $s);
                             <?php endif ?>
                         </dl>
 
-                        <!-- 관리자 액션: 환불 / 상태 변경 -->
+                        <!-- 관리자 액션: 테스트 완료 처리 / 환불 / 상태 변경 -->
                         <div class="d-flex gap-2 mb-3">
+                            <?php if ($p['status'] === 'pending') : ?>
+                                <form action="/admin/payments/<?= (int) $p['id'] ?>/test-complete" method="post" onsubmit="return confirm('토스 테스트 환경이라 실제 결제가 어려워, 이 결제를 결제된 것처럼 테스트 완료 처리합니다. 실제 결제가 아니며 회원 요금제가 즉시 업그레이드됩니다. 계속할까요?');">
+                                    <?= csrf_field() ?>
+                                    <button type="submit" class="btn btn-sm btn-outline-success">테스트 완료 처리</button>
+                                </form>
+                            <?php endif ?>
                             <?php if ($p['status'] === 'completed') : ?>
                                 <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#refundModal<?= (int) $p['id'] ?>">환불</button>
                             <?php endif ?>

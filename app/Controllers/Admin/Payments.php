@@ -165,6 +165,48 @@ class Payments extends BaseController
         return redirect()->to('/admin/payments')->with('message', '환불 처리가 완료되었습니다.');
     }
 
+    // 토스가 테스트 키(test_ck_/test_sk_)로 되어있어서 실제 카드 결제 테스트가 어려운 동안,
+    // 대기중인 결제 건을 "실제로 결제된 것처럼" 처리해주는 임시 기능. updateStatus()와 달리
+    // 이건 회원 plan/plan_expires_at까지 실제 결제 승인(success())과 동일하게 갱신해준다.
+    // method를 'admin_test'로 남겨서 나중에 실결제 이력과 절대 헷갈리지 않게 구분함.
+    public function markTestCompleted(int $id)
+    {
+        $adminId = (int) session()->get('admin_id');
+
+        $model   = new PaymentModel();
+        $payment = $model->find($id);
+
+        if (! $payment) {
+            throw PageNotFoundException::forPageNotFound();
+        }
+
+        if ($payment['status'] !== 'pending') {
+            return redirect()->to('/admin/payments')->with('error', '대기중인 결제만 테스트 완료 처리할 수 있습니다.');
+        }
+
+        $model->update($id, [
+            'status'      => 'completed',
+            'method'      => 'admin_test',
+            'approved_at' => date('Y-m-d H:i:s'),
+            'admin_id'    => $adminId,
+        ]);
+
+        (new UserModel())->update($payment['user_id'], [
+            'plan'            => $payment['plan'],
+            'plan_expires_at' => date('Y-m-d H:i:s', strtotime('+1 month')),
+        ]);
+
+        (new AdminLogModel())->record(
+            $adminId,
+            'test_complete',
+            'payment',
+            $id,
+            "주문 {$payment['order_id']}을(를) 테스트 완료 처리함(실제 결제 아님). 회원(user_id={$payment['user_id']})을 '{$payment['plan']}' 요금제로 업그레이드함.",
+        );
+
+        return redirect()->to('/admin/payments')->with('message', '테스트 완료 처리되었습니다. (실제 결제가 아닙니다)');
+    }
+
     // 상태를 수동으로 바꾼다. 결제 자체를 다시 부르지 않는 단순 수정이라, 회원 요금제에는 영향을 주지 않음
     // (요금제를 직접 바꾸고 싶으면 회원 관리 화면의 요금제 변경 기능을 쓰는 게 맞음 — C단계에서 진행 예정).
     public function updateStatus(int $id)

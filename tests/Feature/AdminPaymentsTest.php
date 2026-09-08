@@ -183,4 +183,56 @@ final class AdminPaymentsTest extends CIUnitTestCase
 
         $result->assertSessionHas('error', '완료된 결제만 환불할 수 있습니다.');
     }
+
+    public function testAdminCanMarkPendingPaymentAsTestCompleted(): void
+    {
+        $adminId = $this->createAdmin();
+        $userId  = $this->createUserWithPayment('testcomplete@example.com', 'pending', 'enterprise', 79800);
+        $payment = (new PaymentModel())->where('user_id', $userId)->first();
+
+        $result = $this->withSession(['isAdminLoggedIn' => true, 'admin_id' => $adminId])
+            ->post("/admin/payments/{$payment['id']}/test-complete", [csrf_token() => csrf_hash()]);
+
+        $result->assertRedirectTo('/admin/payments');
+        $result->assertSessionHas('message');
+
+        $updated = (new PaymentModel())->find($payment['id']);
+        $this->assertSame('completed', $updated['status']);
+        $this->assertSame('admin_test', $updated['method']);
+        $this->assertNotNull($updated['approved_at']);
+
+        // 실제 결제 승인(success())과 동일하게 회원 요금제/만료일이 갱신되어야 함
+        $user = (new UserModel())->find($userId);
+        $this->assertSame('enterprise', $user['plan']);
+        $this->assertNotNull($user['plan_expires_at']);
+
+        $log = (new AdminLogModel())->where('target_type', 'payment')->where('target_id', $payment['id'])->first();
+        $this->assertNotNull($log);
+        $this->assertSame('test_complete', $log['action']);
+    }
+
+    public function testCannotTestCompleteAlreadyCompletedPayment(): void
+    {
+        $adminId = $this->createAdmin();
+        $userId  = $this->createUserWithPayment('alreadydone@example.com', 'completed');
+        $payment = (new PaymentModel())->where('user_id', $userId)->first();
+
+        $result = $this->withSession(['isAdminLoggedIn' => true, 'admin_id' => $adminId])
+            ->post("/admin/payments/{$payment['id']}/test-complete", [csrf_token() => csrf_hash()]);
+
+        $result->assertSessionHas('error', '대기중인 결제만 테스트 완료 처리할 수 있습니다.');
+    }
+
+    public function testNonAdminCannotMarkPaymentAsTestCompleted(): void
+    {
+        $userId  = $this->createUserWithPayment('blockedtestcomplete@example.com', 'pending');
+        $payment = (new PaymentModel())->where('user_id', $userId)->first();
+
+        $result = $this->post("/admin/payments/{$payment['id']}/test-complete", [csrf_token() => csrf_hash()]);
+
+        $result->assertRedirectTo('/');
+
+        $unchanged = (new PaymentModel())->find($payment['id']);
+        $this->assertSame('pending', $unchanged['status']);
+    }
 }
