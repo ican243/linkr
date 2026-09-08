@@ -45,8 +45,12 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
     $routes->post('login', 'Auth::login');
     $routes->get('logout', 'Auth::logout');
     $routes->get('dashboard', 'Dashboard::index', ['filter' => 'adminAuth']);
+    $routes->get('members', 'Dashboard::members', ['filter' => 'adminAuth']);
+    $routes->get('links', 'Dashboard::links', ['filter' => 'adminAuth']);
     $routes->get('users/(:num)', 'Dashboard::show/$1', ['filter' => 'adminAuth']);
     $routes->post('users/(:num)/plan', 'Dashboard::updateUserPlan/$1', ['filter' => 'adminAuth']);
+    $routes->post('users/(:num)/verify-domain', 'Dashboard::verifyUserDomain/$1', ['filter' => 'adminAuth']);
+    $routes->post('users/(:num)/password', 'Dashboard::updateUserPassword/$1', ['filter' => 'adminAuth']);
     $routes->post('users/(:num)/delete', 'Dashboard::deleteUser/$1', ['filter' => 'adminAuth']);
     $routes->post('links/(:num)/delete', 'Dashboard::deleteLink/$1', ['filter' => 'adminAuth']);
     $routes->get('settings', 'Settings::form', ['filter' => 'adminAuth']);
@@ -101,6 +105,7 @@ $routes->get('links/(:segment)/stats/export', 'Stats::exportCsv/$1');
 $routes->get('links/(:segment)/edit', 'Link::editForm/$1');
 $routes->post('links/(:segment)/edit', 'Link::update/$1');
 $routes->post('links/(:segment)/delete', 'Link::delete/$1');
+$routes->post('links/(:segment)/reactivate', 'Link::reactivate/$1');
 
 // QR 코드 관리 화면 (내 링크들을 QR 격자로 보여줌)
 $routes->get('qr', '\App\Controllers\User\QrCodes::index');
