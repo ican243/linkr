@@ -1,7 +1,7 @@
 <?= $this->extend('admin_layout') ?>
 
 <?= $this->section('content') ?>
-<h1 class="mb-4">관리자 대시보드</h1>
+<h1 class="mb-4">대시보드</h1>
 
 <?php if (session()->getFlashdata('message')) : ?>
     <div class="alert alert-success"><?= esc(session()->getFlashdata('message')) ?></div>
@@ -10,146 +10,114 @@
     <div class="alert alert-danger"><?= esc(session()->getFlashdata('error')) ?></div>
 <?php endif ?>
 
-<div class="row mb-4 text-center">
-    <div class="col">
-        <div class="card p-3">
-            <div class="fs-4 fw-bold"><?= (int) $stats['totalUsers'] ?></div>
-            <div class="text-muted">전체 회원 수</div>
-        </div>
-    </div>
-    <div class="col">
-        <div class="card p-3">
-            <div class="fs-4 fw-bold"><?= (int) $stats['totalLinks'] ?></div>
-            <div class="text-muted">전체 링크 수</div>
-        </div>
-    </div>
-    <div class="col">
-        <div class="card p-3">
-            <div class="fs-4 fw-bold"><?= (int) $stats['totalClicks'] ?></div>
-            <div class="text-muted">전체 클릭 수</div>
-        </div>
-    </div>
-</div>
-
-<h2 class="h4">회원 목록</h2>
-<?php if (empty($users)) : ?>
-    <p>아직 가입한 회원이 없습니다.</p>
-<?php else : ?>
-    <div class="table-responsive mb-4">
-        <table class="table table-bordered align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th>ID</th>
-                    <th>이메일</th>
-                    <th>이름</th>
-                    <th>요금제</th>
-                    <th>가입일</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($users as $user) : ?>
-                    <tr>
-                        <td><?= (int) $user['id'] ?></td>
-                        <td><a href="/admin/users/<?= (int) $user['id'] ?>"><?= esc($user['email']) ?></a></td>
-                        <td><?= esc($user['name'] ?? '-') ?></td>
-                        <td>
-                            <div><?= esc(['free' => '무료', 'pro' => '프로', 'enterprise' => '엔터프라이즈'][$user['plan']] ?? $user['plan']) ?>
-                                <?php if (! empty($user['plan_expires_at'])) : ?>
-                                    <span class="text-muted small">(~<?= esc(date('Y-m-d', strtotime($user['plan_expires_at']))) ?>)</span>
-                                <?php endif ?>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-primary mt-1" data-bs-toggle="modal" data-bs-target="#planModal<?= (int) $user['id'] ?>">변경</button>
-                        </td>
-                        <td><?= esc($user['created_at']) ?></td>
-                        <td>
-                            <form action="/admin/users/<?= (int) $user['id'] ?>/delete" method="post"
-                                  onsubmit="return confirm('이 회원을 삭제하시겠습니까? 이 회원의 모든 링크와 클릭 기록도 함께 삭제됩니다.');">
-                                <?= csrf_field() ?>
-                                <button type="submit" class="btn btn-sm btn-outline-danger">삭제</button>
-                            </form>
-                        </td>
-                    </tr>
-                <?php endforeach ?>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- 요금제 변경 모달 (회원마다 하나) -->
-    <?php foreach ($users as $user) : ?>
-        <div class="modal fade" id="planModal<?= (int) $user['id'] ?>" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <form action="/admin/users/<?= (int) $user['id'] ?>/plan" method="post">
-                        <?= csrf_field() ?>
-                        <div class="modal-header">
-                            <h2 class="modal-title h5"><?= esc($user['email']) ?> 요금제 변경</h2>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label class="form-label small">요금제</label>
-                                <select name="plan" class="form-select form-select-sm">
-                                    <?php foreach (['free' => '무료', 'pro' => '프로', 'enterprise' => '엔터프라이즈'] as $value => $label) : ?>
-                                        <option value="<?= esc($value) ?>" <?= $user['plan'] === $value ? 'selected' : '' ?>><?= esc($label) ?></option>
-                                    <?php endforeach ?>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small">이용기간 (개월) — 무료로 변경 시에는 무시됨</label>
-                                <input type="number" name="months" class="form-control form-control-sm" min="1" value="1">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small">변경 사유 (필수)</label>
-                                <textarea name="reason" class="form-control form-control-sm" rows="2" required></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">취소</button>
-                            <button type="submit" class="btn btn-primary btn-sm">변경 적용</button>
-                        </div>
-                    </form>
+<?php
+$statCards = [
+    ['icon' => 'bi-people',       'color' => '#2563eb', 'label' => '전체 회원 수',    'value' => number_format($stats['totalUsers']),  'delta' => $deltas['users']],
+    ['icon' => 'bi-link-45deg',   'color' => '#7c3aed', 'label' => '전체 링크 수',    'value' => number_format($stats['totalLinks']),  'delta' => $deltas['links']],
+    ['icon' => 'bi-cursor',       'color' => '#0891b2', 'label' => '전체 클릭 수',    'value' => number_format($stats['totalClicks']), 'delta' => $deltas['clicks']],
+    ['icon' => 'bi-cash-coin',    'color' => '#15803d', 'label' => '이번 달 매출',    'value' => number_format($stats['monthlyRevenue']) . '원', 'delta' => $deltas['revenue']],
+];
+?>
+<div class="row g-3 mb-4">
+    <?php foreach ($statCards as $card) : ?>
+        <div class="col-6 col-lg-3">
+            <div class="admin-card stat-card">
+                <div class="stat-card-icon" style="background: <?= esc($card['color']) ?>;">
+                    <i class="bi <?= esc($card['icon']) ?>"></i>
+                </div>
+                <div class="stat-card-value"><?= $card['value'] ?></div>
+                <div class="stat-card-label"><?= esc($card['label']) ?></div>
+                <div class="stat-card-delta <?= esc($card['delta']['dir']) ?>">
+                    <?php if ($card['delta']['dir'] === 'up') : ?>
+                        <i class="bi bi-arrow-up-short"></i>
+                    <?php elseif ($card['delta']['dir'] === 'down') : ?>
+                        <i class="bi bi-arrow-down-short"></i>
+                    <?php else : ?>
+                        <i class="bi bi-dash"></i>
+                    <?php endif ?>
+                    <?= (int) $card['delta']['pct'] ?>% 전주 대비
                 </div>
             </div>
         </div>
     <?php endforeach ?>
-<?php endif ?>
+</div>
 
-<h2 class="h4">전체 링크 목록</h2>
-<?php if (empty($links)) : ?>
-    <p>아직 생성된 링크가 없습니다.</p>
-<?php else : ?>
-    <div class="table-responsive">
-        <table class="table table-bordered align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th>단축 주소</th>
-                    <th>원본 주소</th>
-                    <th>만든 회원</th>
-                    <th>클릭 수</th>
-                    <th>생성일</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($links as $link) : ?>
-                    <tr>
-                        <td><a href="<?= esc(base_url($link['short_code'])) ?>" target="_blank" rel="noopener noreferrer"><?= esc($link['short_code']) ?></a></td>
-                        <td class="text-truncate" style="max-width:250px;"><?= esc($link['original_url']) ?></td>
-                        <td><?= esc($link['owner_email']) ?></td>
-                        <td><?= (int) $link['click_count'] ?></td>
-                        <td><?= esc($link['created_at']) ?></td>
-                        <td>
-                            <form action="/admin/links/<?= (int) $link['id'] ?>/delete" method="post"
-                                  onsubmit="return confirm('이 링크를 삭제하시겠습니까? 클릭 기록도 함께 삭제됩니다.');">
-                                <?= csrf_field() ?>
-                                <button type="submit" class="btn btn-sm btn-outline-danger">삭제</button>
-                            </form>
-                        </td>
-                    </tr>
-                <?php endforeach ?>
-            </tbody>
-        </table>
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="admin-card p-3">
+            <h2 class="mb-3">최근 7일 클릭 추이</h2>
+            <canvas id="clickTrendChart" height="120"></canvas>
+        </div>
     </div>
-<?php endif ?>
+    <div class="col-lg-5">
+        <div class="admin-card">
+            <h2 class="p-3 pb-0 mb-2">최근 결제 5건</h2>
+            <?php if (empty($recentPayments)) : ?>
+                <div class="admin-empty">
+                    <i class="bi bi-inbox"></i>
+                    결제 내역이 없습니다
+                </div>
+            <?php else : ?>
+                <div class="table-responsive">
+                    <table class="admin-table table mb-0">
+                        <thead>
+                            <tr>
+                                <th>회원</th>
+                                <th>요금제</th>
+                                <th>금액</th>
+                                <th>상태</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            $statusPill = [
+                                'completed' => 'pill-completed',
+                                'pending'   => 'pill-pending',
+                                'failed'    => 'pill-failed',
+                            ];
+                            $statusLabel = ['completed' => '완료', 'pending' => '대기중', 'failed' => '실패'];
+                            ?>
+                            <?php foreach ($recentPayments as $p) : ?>
+                                <tr>
+                                    <td class="cell-email"><?= esc($p['user_email']) ?></td>
+                                    <td><?= esc($planLabels[$p['plan']] ?? $p['plan']) ?></td>
+                                    <td><?= number_format((int) $p['amount']) ?>원</td>
+                                    <td><span class="pill <?= esc($statusPill[$p['status']] ?? 'pill-other') ?>"><?= esc($statusLabel[$p['status']] ?? $p['status']) ?></span></td>
+                                </tr>
+                            <?php endforeach ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif ?>
+        </div>
+        <p class="text-end mt-2"><a href="/admin/payments" class="small">결제 관리 전체 보기 &rarr;</a></p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var ctx = document.getElementById('clickTrendChart');
+    if (! ctx || typeof Chart === 'undefined') { return; }
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: <?= json_encode($clickTrend['labels']) ?>,
+            datasets: [{
+                label: '클릭 수',
+                data: <?= json_encode($clickTrend['data']) ?>,
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37, 99, 235, 0.08)',
+                tension: 0.3,
+                fill: true,
+                pointRadius: 3,
+            }],
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+        },
+    });
+});
+</script>
 <?= $this->endSection() ?>

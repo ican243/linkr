@@ -46,7 +46,7 @@ final class AdminUserPlanTest extends CIUnitTestCase
                 'reason'     => '전화 문의 후 3개월 부여',
             ]);
 
-        $result->assertRedirectTo('/admin/dashboard');
+        $result->assertRedirectTo('/admin/members');
         $result->assertSessionHas('message');
 
         $user = (new UserModel())->find($userId);
@@ -84,7 +84,7 @@ final class AdminUserPlanTest extends CIUnitTestCase
                 'reason'     => '환불 요청으로 강등',
             ]);
 
-        $result->assertRedirectTo('/admin/dashboard');
+        $result->assertRedirectTo('/admin/members');
 
         $user = (new UserModel())->find($userId);
         $this->assertSame('free', $user['plan']);
@@ -120,7 +120,7 @@ final class AdminUserPlanTest extends CIUnitTestCase
         $result = $this->withSession(['isAdminLoggedIn' => true])
             ->post("/admin/users/{$userId}/plan", [csrf_token() => csrf_hash(), 'plan' => 'super-vip']);
 
-        $result->assertRedirectTo('/admin/dashboard');
+        $result->assertRedirectTo('/admin/members');
         $result->assertSessionHas('error');
 
         // 잘못된 값이면 기존 요금제(free)가 그대로 유지되어야 함

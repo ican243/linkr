@@ -11,35 +11,35 @@
 <?php endif ?>
 
 <!-- 요약 카드 -->
-<div class="row mb-4 text-center">
-    <div class="col-6 col-md-3 mb-3 mb-md-0">
-        <div class="card p-3">
-            <div class="fs-4 fw-bold"><?= number_format($summary['monthlyRevenue']) ?>원</div>
-            <div class="text-muted small">이번 달 매출</div>
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+        <div class="admin-card stat-card">
+            <div class="stat-card-value"><?= number_format($summary['monthlyRevenue']) ?>원</div>
+            <div class="stat-card-label">이번 달 매출</div>
         </div>
     </div>
-    <div class="col-6 col-md-3 mb-3 mb-md-0">
-        <div class="card p-3">
-            <div class="fs-4 fw-bold"><?= (int) $summary['monthlyCount'] ?>건</div>
-            <div class="text-muted small">이번 달 결제 건수</div>
+    <div class="col-6 col-lg-3">
+        <div class="admin-card stat-card">
+            <div class="stat-card-value"><?= (int) $summary['monthlyCount'] ?>건</div>
+            <div class="stat-card-label">이번 달 결제 건수</div>
         </div>
     </div>
-    <div class="col-6 col-md-3">
-        <div class="card p-3">
-            <div class="fs-4 fw-bold"><?= (int) $summary['pendingCount'] ?>건</div>
-            <div class="text-muted small">대기중 건수</div>
+    <div class="col-6 col-lg-3">
+        <div class="admin-card stat-card">
+            <div class="stat-card-value"><?= (int) $summary['pendingCount'] ?>건</div>
+            <div class="stat-card-label">대기중 건수</div>
         </div>
     </div>
-    <div class="col-6 col-md-3">
-        <div class="card p-3">
-            <div class="fs-4 fw-bold"><?= (int) $summary['paidUserCount'] ?>명</div>
-            <div class="text-muted small">총 유료 회원 수</div>
+    <div class="col-6 col-lg-3">
+        <div class="admin-card stat-card">
+            <div class="stat-card-value"><?= (int) $summary['paidUserCount'] ?>명</div>
+            <div class="stat-card-label">총 유료 회원 수</div>
         </div>
     </div>
 </div>
 
 <!-- 필터 -->
-<div class="card p-3 mb-4">
+<div class="admin-card p-3 mb-3">
     <form action="/admin/payments" method="get" class="row g-2 align-items-end">
         <div class="col-6 col-md-2">
             <label class="form-label small mb-1">상태</label>
@@ -64,29 +64,33 @@
             <input type="date" name="date_to" class="form-control form-control-sm" value="<?= esc($filters['date_to']) ?>">
         </div>
         <div class="col-12 col-md-3 d-flex gap-2">
-            <button type="submit" class="btn btn-primary btn-sm">필터 적용</button>
-            <a href="/admin/payments" class="btn btn-outline-secondary btn-sm">초기화</a>
+            <button type="submit" class="btn admin-btn admin-btn-primary btn-sm">필터 적용</button>
+            <a href="/admin/payments" class="btn admin-btn admin-btn-secondary btn-sm">초기화</a>
         </div>
     </form>
 </div>
 
 <?php
-$statusBadges = [
-    'completed' => ['label' => '완료', 'class' => 'bg-success'],
-    'pending'   => ['label' => '대기중', 'class' => 'bg-warning text-dark'],
-    'failed'    => ['label' => '실패', 'class' => 'bg-danger'],
+$statusPill = [
+    'completed' => 'pill-completed',
+    'pending'   => 'pill-pending',
+    'failed'    => 'pill-failed',
 ];
-$statusLabel = static fn (string $s) => ($statusBadges[$s]['label'] ?? $s);
+$statusText = ['completed' => '완료', 'pending' => '대기중', 'failed' => '실패'];
 ?>
 
+<div class="admin-card">
 <?php if (empty($payments)) : ?>
-    <p class="text-muted">조건에 맞는 결제 내역이 없습니다.</p>
+    <div class="admin-empty">
+        <i class="bi bi-receipt"></i>
+        조건에 맞는 결제 내역이 없습니다
+    </div>
 <?php else : ?>
 
     <!-- 데스크톱 테이블 -->
     <div class="table-responsive d-none d-md-block">
-        <table class="table table-bordered align-middle">
-            <thead class="table-light">
+        <table class="admin-table table mb-0">
+            <thead>
                 <tr>
                     <th>주문일</th>
                     <th>회원 이메일</th>
@@ -95,27 +99,27 @@ $statusLabel = static fn (string $s) => ($statusBadges[$s]['label'] ?? $s);
                     <th>결제수단</th>
                     <th>상태</th>
                     <th>영수증</th>
-                    <th>관리</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($payments as $p) : $badge = $statusBadges[$p['status']] ?? ['label' => $p['status'], 'class' => 'bg-secondary']; ?>
+                <?php foreach ($payments as $p) : $pill = $statusPill[$p['status']] ?? 'pill-other'; $label = $statusText[$p['status']] ?? $p['status']; ?>
                     <tr>
-                        <td><?= esc(date('Y-m-d H:i', strtotime($p['created_at']))) ?></td>
-                        <td><?= esc($p['user_email']) ?></td>
+                        <td class="cell-sub"><?= esc(date('Y-m-d H:i', strtotime($p['created_at']))) ?></td>
+                        <td class="cell-email"><?= esc($p['user_email']) ?></td>
                         <td><?= esc($planLabels[$p['plan']] ?? $p['plan']) ?></td>
                         <td><?= number_format((int) $p['amount']) ?>원</td>
                         <td><?= esc($p['method'] ?? '-') ?></td>
-                        <td><span class="badge <?= esc($badge['class']) ?>"><?= esc($badge['label']) ?></span></td>
+                        <td><span class="pill <?= esc($pill) ?>"><?= esc($label) ?></span></td>
                         <td>
                             <?php if ($p['status'] === 'completed' && ! empty($p['receipt_url'])) : ?>
-                                <a href="<?= esc($p['receipt_url']) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">영수증</a>
+                                <a href="<?= esc($p['receipt_url']) ?>" target="_blank" rel="noopener noreferrer" class="small">보기</a>
                             <?php else : ?>
-                                <span class="text-muted small">-</span>
+                                <span class="cell-sub">-</span>
                             <?php endif ?>
                         </td>
-                        <td>
-                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#detailModal<?= (int) $p['id'] ?>">상세</button>
+                        <td class="text-end">
+                            <button type="button" class="btn admin-btn admin-btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#detailModal<?= (int) $p['id'] ?>">상세</button>
                         </td>
                     </tr>
                 <?php endforeach ?>
@@ -124,33 +128,33 @@ $statusLabel = static fn (string $s) => ($statusBadges[$s]['label'] ?? $s);
     </div>
 
     <!-- 모바일 카드 -->
-    <div class="d-md-none">
-        <?php foreach ($payments as $p) : $badge = $statusBadges[$p['status']] ?? ['label' => $p['status'], 'class' => 'bg-secondary']; ?>
-            <div class="card p-3 mb-3">
+    <div class="d-md-none p-3">
+        <?php foreach ($payments as $p) : $pill = $statusPill[$p['status']] ?? 'pill-other'; $label = $statusText[$p['status']] ?? $p['status']; ?>
+            <div class="border rounded p-3 mb-2">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <div>
-                        <div class="fw-bold"><?= esc($p['user_email']) ?></div>
-                        <div class="text-muted small"><?= esc(date('Y-m-d H:i', strtotime($p['created_at']))) ?></div>
+                        <div class="cell-name"><?= esc($p['user_email']) ?></div>
+                        <div class="cell-sub"><?= esc(date('Y-m-d H:i', strtotime($p['created_at']))) ?></div>
                     </div>
-                    <span class="badge <?= esc($badge['class']) ?>"><?= esc($badge['label']) ?></span>
+                    <span class="pill <?= esc($pill) ?>"><?= esc($label) ?></span>
                 </div>
                 <div class="small text-muted mb-1">요금제: <?= esc($planLabels[$p['plan']] ?? $p['plan']) ?></div>
                 <div class="small text-muted mb-1">금액: <?= number_format((int) $p['amount']) ?>원</div>
                 <div class="small text-muted mb-2">결제수단: <?= esc($p['method'] ?? '-') ?></div>
                 <div class="d-flex gap-2">
                     <?php if ($p['status'] === 'completed' && ! empty($p['receipt_url'])) : ?>
-                        <a href="<?= esc($p['receipt_url']) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">영수증</a>
+                        <a href="<?= esc($p['receipt_url']) ?>" target="_blank" rel="noopener noreferrer" class="btn admin-btn admin-btn-secondary btn-sm">영수증</a>
                     <?php endif ?>
-                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#detailModal<?= (int) $p['id'] ?>">상세</button>
+                    <button type="button" class="btn admin-btn admin-btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#detailModal<?= (int) $p['id'] ?>">상세</button>
                 </div>
             </div>
         <?php endforeach ?>
     </div>
 
-    <?= $pager->links('default', 'bootstrap5') ?>
+    <div class="p-3 pt-0"><?= $pager->links('default', 'bootstrap5') ?></div>
 
     <!-- 결제 상세 모달 (행마다 하나) -->
-    <?php foreach ($payments as $p) : $badge = $statusBadges[$p['status']] ?? ['label' => $p['status'], 'class' => 'bg-secondary']; ?>
+    <?php foreach ($payments as $p) : $pill = $statusPill[$p['status']] ?? 'pill-other'; $label = $statusText[$p['status']] ?? $p['status']; ?>
         <div class="modal fade" id="detailModal<?= (int) $p['id'] ?>" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -165,7 +169,7 @@ $statusLabel = static fn (string $s) => ($statusBadges[$s]['label'] ?? $s);
                             <dt class="col-4">요금제</dt><dd class="col-8"><?= esc($planLabels[$p['plan']] ?? $p['plan']) ?></dd>
                             <dt class="col-4">금액</dt><dd class="col-8"><?= number_format((int) $p['amount']) ?>원</dd>
                             <dt class="col-4">결제수단</dt><dd class="col-8"><?= esc($p['method'] ?? '-') ?></dd>
-                            <dt class="col-4">상태</dt><dd class="col-8"><span class="badge <?= esc($badge['class']) ?>"><?= esc($badge['label']) ?></span></dd>
+                            <dt class="col-4">상태</dt><dd class="col-8"><span class="pill <?= esc($pill) ?>"><?= esc($label) ?></span></dd>
                             <?php if (! empty($p['refunded_at'])) : ?>
                                 <dt class="col-4">환불일시</dt><dd class="col-8"><?= esc(date('Y-m-d H:i', strtotime($p['refunded_at']))) ?></dd>
                                 <dt class="col-4">환불 사유</dt><dd class="col-8"><?= esc($p['cancel_reason']) ?></dd>
@@ -175,15 +179,16 @@ $statusLabel = static fn (string $s) => ($statusBadges[$s]['label'] ?? $s);
                         <!-- 관리자 액션: 테스트 완료 처리 / 환불 / 상태 변경 -->
                         <div class="d-flex gap-2 mb-3">
                             <?php if ($p['status'] === 'pending') : ?>
-                                <form action="/admin/payments/<?= (int) $p['id'] ?>/test-complete" method="post" onsubmit="return confirm('토스 테스트 환경이라 실제 결제가 어려워, 이 결제를 결제된 것처럼 테스트 완료 처리합니다. 실제 결제가 아니며 회원 요금제가 즉시 업그레이드됩니다. 계속할까요?');">
+                                <form action="/admin/payments/<?= (int) $p['id'] ?>/test-complete" method="post"
+                                      data-confirm="토스 테스트 환경이라 실제 결제가 어려워, 이 결제를 결제된 것처럼 테스트 완료 처리합니다. 실제 결제가 아니며 회원 요금제가 즉시 업그레이드됩니다. 계속할까요?">
                                     <?= csrf_field() ?>
-                                    <button type="submit" class="btn btn-sm btn-outline-success">테스트 완료 처리</button>
+                                    <button type="submit" class="btn admin-btn admin-btn-secondary btn-sm">테스트 완료 처리</button>
                                 </form>
                             <?php endif ?>
                             <?php if ($p['status'] === 'completed') : ?>
-                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#refundModal<?= (int) $p['id'] ?>">환불</button>
+                                <button type="button" class="btn admin-btn admin-btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#refundModal<?= (int) $p['id'] ?>">환불</button>
                             <?php endif ?>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#statusModal<?= (int) $p['id'] ?>">상태 수동 변경</button>
+                            <button type="button" class="btn admin-btn admin-btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#statusModal<?= (int) $p['id'] ?>">상태 수동 변경</button>
                         </div>
 
                         <!-- 관리자 메모 -->
@@ -191,7 +196,7 @@ $statusLabel = static fn (string $s) => ($statusBadges[$s]['label'] ?? $s);
                             <?= csrf_field() ?>
                             <label class="form-label small fw-semibold">관리자 메모</label>
                             <textarea name="admin_memo" class="form-control form-control-sm" rows="2"><?= esc($p['admin_memo'] ?? '') ?></textarea>
-                            <button type="submit" class="btn btn-sm btn-outline-primary mt-2">메모 저장</button>
+                            <button type="submit" class="btn admin-btn admin-btn-secondary btn-sm mt-2">메모 저장</button>
                         </form>
 
                         <!-- 처리 이력 -->
@@ -222,7 +227,7 @@ $statusLabel = static fn (string $s) => ($statusBadges[$s]['label'] ?? $s);
             <div class="modal fade" id="refundModal<?= (int) $p['id'] ?>" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
-                        <form action="/admin/payments/<?= (int) $p['id'] ?>/refund" method="post" onsubmit="return confirm('정말 환불 처리하시겠습니까? 토스에 실제 환불 요청이 전송되고, 해당 회원은 무료 요금제로 강등됩니다.');">
+                        <form action="/admin/payments/<?= (int) $p['id'] ?>/refund" method="post">
                             <?= csrf_field() ?>
                             <div class="modal-header">
                                 <h2 class="modal-title h5">환불 처리</h2>
@@ -234,8 +239,8 @@ $statusLabel = static fn (string $s) => ($statusBadges[$s]['label'] ?? $s);
                                 <textarea name="cancel_reason" class="form-control form-control-sm" rows="2" required></textarea>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">취소</button>
-                                <button type="submit" class="btn btn-danger btn-sm">환불 실행</button>
+                                <button type="button" class="btn admin-btn admin-btn-secondary" data-bs-dismiss="modal">취소</button>
+                                <button type="submit" class="btn admin-btn admin-btn-danger">환불 실행</button>
                             </div>
                         </form>
                     </div>
@@ -256,14 +261,14 @@ $statusLabel = static fn (string $s) => ($statusBadges[$s]['label'] ?? $s);
                         <div class="modal-body">
                             <p class="small text-muted">회원 요금제에는 영향을 주지 않고, 이 결제 건의 상태값만 바꿉니다.</p>
                             <select name="status" class="form-select form-select-sm">
-                                <?php foreach (['completed' => '완료', 'pending' => '대기중', 'failed' => '실패'] as $value => $label) : ?>
-                                    <option value="<?= esc($value) ?>" <?= $p['status'] === $value ? 'selected' : '' ?>><?= esc($label) ?></option>
+                                <?php foreach (['completed' => '완료', 'pending' => '대기중', 'failed' => '실패'] as $value => $label2) : ?>
+                                    <option value="<?= esc($value) ?>" <?= $p['status'] === $value ? 'selected' : '' ?>><?= esc($label2) ?></option>
                                 <?php endforeach ?>
                             </select>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">취소</button>
-                            <button type="submit" class="btn btn-primary btn-sm">변경</button>
+                            <button type="button" class="btn admin-btn admin-btn-secondary" data-bs-dismiss="modal">취소</button>
+                            <button type="submit" class="btn admin-btn admin-btn-primary">변경</button>
                         </div>
                     </form>
                 </div>
@@ -272,4 +277,5 @@ $statusLabel = static fn (string $s) => ($statusBadges[$s]['label'] ?? $s);
     <?php endforeach ?>
 
 <?php endif ?>
+</div>
 <?= $this->endSection() ?>
