@@ -35,6 +35,7 @@ class Filters extends BaseFilters
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
         'adminAuth'     => \App\Filters\AdminAuthFilter::class,
+        'customDomain'  => \App\Filters\CustomDomainFilter::class,
     ];
 
     /**
@@ -74,6 +75,9 @@ class Filters extends BaseFilters
     public array $globals = [
         'before' => [
             // 'honeypot',
+            // 커스텀 도메인(Host 헤더) 판별이 제일 먼저 이루어져야 함 — 우리 도메인이 아닌
+            // Host로 들어온 요청은 인증된 커스텀 도메인이 아닌 이상 여기서 바로 걸러짐.
+            'customDomain',
             // api/* 는 브라우저 세션이 아니라 API 키(Authorization: Bearer ...)로 인증하는
             // 외부 프로그램용 엔드포인트라, 세션 쿠키 기반 CSRF 토큰이 없어 여기서 검사를 뺌.
             'csrf' => ['except' => ['api/*']],

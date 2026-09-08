@@ -21,8 +21,10 @@ if (! function_exists('short_url')) {
 
             $user = $userCache[$userId];
 
+            // SSL은 아직 지원 전이라(커스텀 도메인에 인증서가 없음) 당분간 http로만 생성함.
+            // SSL 붙이면 이 부분만 https로 바꾸면 됨.
             if (! empty($user) && ! empty($user['custom_domain']) && ! empty($user['custom_domain_verified'])) {
-                return 'https://' . rtrim($user['custom_domain'], '/') . '/' . $link['short_code'];
+                return 'http://' . rtrim($user['custom_domain'], '/') . '/' . $link['short_code'];
             }
         }
 

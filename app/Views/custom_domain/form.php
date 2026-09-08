@@ -21,17 +21,25 @@
             <?php endif ?>
         </p>
 
+        <?php if ($user['custom_domain_verified']) : ?>
+            <p class="text-muted small">
+                현재는 <code>http://<?= esc($user['custom_domain']) ?></code> 로만 접속됩니다(https는 아직 지원 전).
+                A 레코드가 <code>1.234.79.116</code>으로 설정되어 있어야 실제로 접속이 됩니다.
+            </p>
+        <?php endif ?>
+
         <?php if (! $user['custom_domain_verified']) : ?>
             <div class="alert alert-light border">
-                아래 DNS 레코드 중 하나를 도메인 관리 페이지에서 설정한 뒤 "DNS 연결 확인" 버튼을 눌러주세요.
+                도메인 관리 페이지(가비아, 후이즈 등 구매하신 곳)에서 아래 두 가지를 모두 설정한 뒤
+                "TXT 레코드 확인" 버튼을 눌러주세요.
                 <ul class="mb-0">
-                    <li>CNAME → <code>kir1.cafe24.com</code></li>
-                    <li>또는 A 레코드 → 이 서비스 서버의 IP</li>
+                    <li>TXT 레코드에 <code>linkr-verify=<?= esc($user['custom_domain_verify_code'] ?? '') ?></code> 추가 (소유권 확인용)</li>
+                    <li>A 레코드를 <code>1.234.79.116</code>으로 설정 (실제 접속을 위한 라우팅용)</li>
                 </ul>
             </div>
             <form action="/custom-domain/verify" method="post" class="mb-2">
                 <?= csrf_field() ?>
-                <button type="submit" class="btn btn-outline-primary">DNS 연결 확인</button>
+                <button type="submit" class="btn btn-outline-primary">TXT 레코드 확인</button>
             </form>
         <?php endif ?>
 
