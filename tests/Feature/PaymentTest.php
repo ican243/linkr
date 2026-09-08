@@ -96,4 +96,28 @@ final class PaymentTest extends CIUnitTestCase
         $result->assertRedirectTo('/pricing');
         $this->assertSame(0, (new PaymentModel())->where('user_id', $userId)->countAllResults());
     }
+
+    // receipt_url 컬럼/모델 연결 확인용. 토스 실제 승인(Payment::success()의 ④번)이
+    // 진짜 네트워크 호출이라 자동화 테스트에서 그 경로 자체는 못 타지만(기존 테스트들도 회피),
+    // 그 경로가 저장하는 값의 형태(컬럼에 URL을 저장/조회)는 여기서 검증함.
+    public function testReceiptUrlCanBeStoredAndRetrieved(): void
+    {
+        $userId  = $this->createUser();
+        $orderId = 'king_test_receipt';
+        $receiptUrl = 'https://dashboard.tosspayments.com/receipt/test123';
+
+        (new PaymentModel())->insert([
+            'user_id'     => $userId,
+            'order_id'    => $orderId,
+            'amount'      => 33000,
+            'plan'        => 'pro',
+            'status'      => 'completed',
+            'method'      => '카드',
+            'receipt_url' => $receiptUrl,
+            'approved_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $payment = (new PaymentModel())->where('order_id', $orderId)->first();
+        $this->assertSame($receiptUrl, $payment['receipt_url']);
+    }
 }

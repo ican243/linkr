@@ -102,10 +102,13 @@ class Payment extends BaseController
         $result = json_decode($response->getBody(), true);
 
         // ④ 승인 성공 -> DB 갱신 + 회원 등급 업그레이드
+        // receipt.url은 토스가 발급해주는 실제 영수증 페이지 링크. 결제 내역 화면의
+        // "영수증 보기" 버튼에 그대로 씀 (우리 쪽에서 영수증을 따로 만들 필요 없음).
         $model->update($payment['id'], [
             'status'      => 'completed',
             'payment_key' => $paymentKey,
             'method'      => $result['method'] ?? null,
+            'receipt_url' => $result['receipt']['url'] ?? null,
             'approved_at' => date('Y-m-d H:i:s'),
         ]);
 
