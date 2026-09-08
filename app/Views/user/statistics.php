@@ -58,7 +58,7 @@
                     <tr>
                         <td><?= $i + 1 ?></td>
                         <td><?= ! empty($link['title']) ? esc($link['title']) : '<span class="text-muted">—</span>' ?></td>
-                        <td><a href="<?= esc(base_url($link['short_code'])) ?>" target="_blank" rel="noopener noreferrer"><?= esc(base_url($link['short_code'])) ?></a></td>
+                        <td><a href="<?= esc(short_url($link)) ?>" target="_blank" rel="noopener noreferrer"><?= esc(short_url($link)) ?></a></td>
                         <td class="text-truncate" style="max-width:250px;"><?= esc($link['original_url']) ?></td>
                         <td><?= (int) $link['click_count'] ?></td>
                     </tr>

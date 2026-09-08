@@ -184,6 +184,32 @@ final class AdminPaymentsTest extends CIUnitTestCase
         $result->assertSessionHas('error', '완료된 결제만 환불할 수 있습니다.');
     }
 
+    public function testAdminCanRefundTestCompletedPaymentWithoutCallingToss(): void
+    {
+        $adminId = $this->createAdmin();
+        $userId  = $this->createUserWithPayment('refundtestcomplete@example.com', 'completed');
+        (new PaymentModel())->where('user_id', $userId)->set(['method' => 'admin_test', 'payment_key' => null])->update();
+        (new UserModel())->update($userId, ['plan' => 'pro', 'plan_expires_at' => date('Y-m-d H:i:s', strtotime('+1 month'))]);
+        $payment = (new PaymentModel())->where('user_id', $userId)->first();
+
+        $result = $this->withSession(['isAdminLoggedIn' => true, 'admin_id' => $adminId])
+            ->post("/admin/payments/{$payment['id']}/refund", [
+                csrf_token()    => csrf_hash(),
+                'cancel_reason' => '테스트 완료 처리 취소',
+            ]);
+
+        $result->assertRedirectTo('/admin/payments');
+        $result->assertSessionHas('message');
+
+        $updated = (new PaymentModel())->find($payment['id']);
+        $this->assertSame('refunded', $updated['status']);
+
+        // payment_key가 없는 admin_test 건이라 실제 토스 API를 호출하지 않고도 정상 처리되어야 함
+        $user = (new UserModel())->find($userId);
+        $this->assertSame('free', $user['plan']);
+        $this->assertNull($user['plan_expires_at']);
+    }
+
     public function testAdminCanMarkPendingPaymentAsTestCompleted(): void
     {
         $adminId = $this->createAdmin();

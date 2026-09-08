@@ -25,9 +25,10 @@ class QrCodes extends BaseController
                 ->groupEnd();
         }
 
-        $links = $model->orderBy('created_at', 'DESC')->paginate(9);
+        $links = $model->orderBy('created_at', 'DESC')->paginate(8);
 
-        return view('user/qr_codes', [
+        helper('link');
+		return view('user/qr_codes', [
             'links' => $links,
             'pager' => $model->pager,
             'query' => $query,

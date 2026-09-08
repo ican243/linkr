@@ -7,9 +7,7 @@
     <?php if (! empty($error)) : ?>
         <div class="alert alert-danger"><?= esc($error) ?></div>
     <?php endif ?>
-
-    <p class="text-muted">단축 주소: <a href="<?= esc(base_url($link['short_code'])) ?>" target="_blank" rel="noopener noreferrer"><?= esc(base_url($link['short_code'])) ?></a> (변경 불가)</p>
-
+    <p class="text-muted">단축 주소: <a href="<?= esc(short_url($link)) ?>" target="_blank" rel="noopener noreferrer"><?= esc(short_url($link)) ?></a> (변경 불가)</p>
     <form action="/links/<?= esc($link['short_code']) ?>/edit" method="post">
         <?= csrf_field() ?>
         <div class="mb-3">

@@ -97,6 +97,10 @@ class Payments extends BaseController
 
     // 토스에 진짜 환불(결제취소) 요청을 보낸다. 완료된 결제만 가능하고,
     // 성공하면 방침대로 그 회원을 무료 요금제로 자동 강등시킨다.
+    // 단, method가 'admin'(회원 요금제 강제부여)이나 'admin_test'(테스트 완료 처리)인 건은
+    // 애초에 진짜 토스 결제가 아니라서 payment_key 자체가 없음 — 진짜 API로 취소를 시도하면
+    // 취소할 실제 결제가 없어서 무조건 실패하므로, 이런 건은 토스 통신을 생략하고 로컬에서만
+    // 취소 처리한다(그래서 "환불" 버튼이 테스트 완료/강제부여 건을 되돌리는 정식 수단이 됨).
     public function refund(int $id)
     {
         $adminId = (int) session()->get('admin_id');
@@ -117,50 +121,53 @@ class Payments extends BaseController
             return redirect()->to('/admin/payments')->with('error', '완료된 결제만 환불할 수 있습니다.');
         }
 
-        // 토스 서버가 4xx/5xx를 내려도 예외를 던지지 말고(http_errors => false) 그대로 받아서,
-        // 실패 이유(response body)를 로그와 화면 둘 다에 정확히 남긴다.
-        try {
-            $client   = service('curlrequest');
-            $response = $client->post("https://api.tosspayments.com/v1/payments/{$payment['payment_key']}/cancel", [
-                'headers' => [
-                    'Authorization' => 'Basic ' . base64_encode(env('tosspayments.secretKey') . ':'),
-                    'Content-Type'  => 'application/json',
-                ],
-                'json'        => ['cancelReason' => $reason],
-                'http_errors' => false,
-            ]);
-        } catch (\Throwable $e) {
-            log_message('error', '토스 결제취소 통신 실패: ' . $e->getMessage());
+        $isAdminGrantedPayment = in_array($payment['method'], ['admin', 'admin_test'], true);
+        $result                = null;
 
-            return redirect()->to('/admin/payments')->with('error', '환불 처리 중 통신 오류가 발생했습니다.');
-        }
+        if (! $isAdminGrantedPayment) {
+            // 토스 서버가 4xx/5xx를 내려도 예외를 던지지 말고(http_errors => false) 그대로 받아서,
+            // 실패 이유(response body)를 로그와 화면 둘 다에 정확히 남긴다.
+            try {
+                $client   = service('curlrequest');
+                $response = $client->post("https://api.tosspayments.com/v1/payments/{$payment['payment_key']}/cancel", [
+                    'headers' => [
+                        'Authorization' => 'Basic ' . base64_encode(env('tosspayments.secretKey') . ':'),
+                        'Content-Type'  => 'application/json',
+                    ],
+                    'json'        => ['cancelReason' => $reason],
+                    'http_errors' => false,
+                ]);
+            } catch (\Throwable $e) {
+                log_message('error', '토스 결제취소 통신 실패: ' . $e->getMessage());
 
-        $result = json_decode($response->getBody(), true);
+                return redirect()->to('/admin/payments')->with('error', '환불 처리 중 통신 오류가 발생했습니다.');
+            }
 
-        if ($response->getStatusCode() !== 200) {
-            log_message('error', '토스 결제취소 실패 (' . $response->getStatusCode() . '): ' . $response->getBody());
+            $result = json_decode($response->getBody(), true);
 
-            return redirect()->to('/admin/payments')->with('error', '토스에서 환불 요청을 거부했습니다: ' . ($result['message'] ?? '알 수 없는 오류'));
+            if ($response->getStatusCode() !== 200) {
+                log_message('error', '토스 결제취소 실패 (' . $response->getStatusCode() . '): ' . $response->getBody());
+
+                return redirect()->to('/admin/payments')->with('error', '토스에서 환불 요청을 거부했습니다: ' . ($result['message'] ?? '알 수 없는 오류'));
+            }
         }
 
         $model->update($id, [
             'status'        => 'refunded',
             'refunded_at'   => date('Y-m-d H:i:s'),
             'cancel_reason' => $reason,
-            'toss_response' => json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'toss_response' => $result !== null ? json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
             'admin_id'      => $adminId,
         ]);
 
         // 정책: 환불되면 그 회원은 자동으로 무료 요금제로 강등됨(무료는 만료일 개념이 없어서 함께 비움).
         (new UserModel())->update($payment['user_id'], ['plan' => 'free', 'plan_expires_at' => null]);
 
-        (new AdminLogModel())->record(
-            $adminId,
-            'refund',
-            'payment',
-            $id,
-            "주문 {$payment['order_id']} 환불 처리 (사유: {$reason}). 회원(user_id={$payment['user_id']})을 무료 요금제로 강등함.",
-        );
+        $detail = $isAdminGrantedPayment
+            ? "주문 {$payment['order_id']} 취소 처리(실제 토스 결제가 아니라 로컬에서만 처리함) (사유: {$reason}). 회원(user_id={$payment['user_id']})을 무료 요금제로 강등함."
+            : "주문 {$payment['order_id']} 환불 처리 (사유: {$reason}). 회원(user_id={$payment['user_id']})을 무료 요금제로 강등함.";
+
+        (new AdminLogModel())->record($adminId, 'refund', 'payment', $id, $detail);
 
         return redirect()->to('/admin/payments')->with('message', '환불 처리가 완료되었습니다.');
     }

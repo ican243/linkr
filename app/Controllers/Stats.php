@@ -56,7 +56,8 @@ class Stats extends BaseController
         }
         $recentLogs = $recentLogsQuery->orderBy('clicked_at', 'DESC')->limit(50)->find();
 
-        return view('stats/show', [
+        helper('link');
+		return view('stats/show', [
             'link'          => $link,
             'totalClicks'   => $totalClicks,
             'dailyClicks'   => $dailyClicks,

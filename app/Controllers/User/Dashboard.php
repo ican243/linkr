@@ -32,7 +32,8 @@ class Dashboard extends BaseController
                 ->countAllResults();
         }
 
-        return view('user/dashboard', [
+        helper('link');
+		return view('user/dashboard', [
             'links'         => $links,
             'plan'          => $user['plan'],
             'usedThisMonth' => $usedThisMonth,

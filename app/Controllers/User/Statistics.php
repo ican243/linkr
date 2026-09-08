@@ -26,7 +26,8 @@ class Statistics extends BaseController
         usort($topLinks, static fn ($a, $b) => (int) $b['click_count'] <=> (int) $a['click_count']);
         $topLinks = array_slice($topLinks, 0, 5);
 
-        return view('user/statistics', [
+        helper('link');
+		return view('user/statistics', [
             'totalLinks'      => $totalLinks,
             'totalClicks'     => $totalClicks,
             'topClicks'       => $topClicks,

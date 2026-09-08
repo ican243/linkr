@@ -45,7 +45,8 @@ class Links extends BaseController
 
         $links = $model->paginate(10);
 
-        return view('user/links', [
+        helper('link');
+		return view('user/links', [
             'links'  => $links,
             'pager'  => $model->pager,
             'query'  => $query,

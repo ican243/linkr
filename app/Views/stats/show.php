@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 <h1 class="mb-1">클릭 통계</h1>
 <p class="text-muted">
-    <a href="<?= esc(base_url($link['short_code'])) ?>" target="_blank" rel="noopener noreferrer"><?= esc(base_url($link['short_code'])) ?></a>
+    <a href="<?= esc(short_url($link)) ?>" target="_blank" rel="noopener noreferrer"><?= esc(short_url($link)) ?></a>
     → <?= esc($link['original_url']) ?>
 </p>
 

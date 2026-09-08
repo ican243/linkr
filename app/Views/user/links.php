@@ -58,7 +58,7 @@
                     <tr>
                         <td><img src="<?= esc(base_url('qr/' . $link['short_code'])) ?>" alt="QR" width="60" height="60"></td>
                         <td><?= ! empty($link['title']) ? esc($link['title']) : '<span class="text-muted">—</span>' ?></td>
-                        <td><a href="<?= esc(base_url($link['short_code'])) ?>" target="_blank" rel="noopener noreferrer"><?= esc(base_url($link['short_code'])) ?></a></td>
+                        <td><a href="<?= esc(short_url($link)) ?>" target="_blank" rel="noopener noreferrer"><?= esc(short_url($link)) ?></a></td>
                         <td class="text-truncate" style="max-width:220px;"><?= esc($link['original_url']) ?></td>
                         <td>
                             <?php if ($isExpired) : ?>

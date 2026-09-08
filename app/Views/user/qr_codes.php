@@ -29,7 +29,7 @@
                         <?= ! empty($link['title']) ? esc($link['title']) : esc($link['short_code']) ?>
                     </div>
                     <div class="small text-muted text-truncate mb-2">
-                        <?= esc(base_url($link['short_code'])) ?>
+                        <?= esc(short_url($link)) ?>
                     </div>
                     <div class="d-flex gap-2 justify-content-center">
                         <a href="<?= esc(base_url('qr/' . $link['short_code'])) ?>" download="Linkr-qr-<?= esc($link['short_code']) ?>.png"

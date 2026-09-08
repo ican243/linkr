@@ -19,9 +19,10 @@ class Qr extends BaseController
             throw PageNotFoundException::forPageNotFound();
         }
 
+        helper('link');
         $result = (new Builder(
             writer: new PngWriter(),
-            data: base_url($code),
+            data: short_url($link),
             size: 300,
             margin: 10,
         ))->build();

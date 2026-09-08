@@ -63,8 +63,10 @@ class Links extends BaseController
             'short_code'   => $code,
         ]);
 
+        helper('link');
+
         return $this->response->setStatusCode(201)->setJSON([
-            'short_url'  => base_url($code),
+            'short_url'  => short_url(['user_id' => $user['id'], 'short_code' => $code]),
             'short_code' => $code,
         ]);
     }
@@ -88,9 +90,10 @@ class Links extends BaseController
         $links = $model->paginate(20);
         $pager = $model->pager;
 
+        helper('link');
         $data = array_map(static fn (array $link): array => [
             'short_code'   => $link['short_code'],
-            'short_url'    => base_url($link['short_code']),
+            'short_url'    => short_url($link),
             'original_url' => $link['original_url'],
             'title'        => $link['title'],
             'click_count'  => (int) $link['click_count'],

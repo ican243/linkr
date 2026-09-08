@@ -109,7 +109,10 @@ class Link extends BaseController
             'expires_at'   => ($expiresAt !== null && $expiresAt !== '') ? date('Y-m-d H:i:s', strtotime($expiresAt)) : null,
         ]);
 
-        return view('link/form', ['shortUrl' => base_url($code), 'shortCode' => $code]);
+        helper('link');
+        $shortUrl = short_url(['user_id' => $user['id'], 'short_code' => $code]);
+
+        return view('link/form', ['shortUrl' => $shortUrl, 'shortCode' => $code]);
     }
 
     public function editForm(string $code)
@@ -119,6 +122,8 @@ class Link extends BaseController
         }
 
         $link = $this->findOwnedLinkOrFail($code);
+
+        helper('link');
 
         return view('link/edit', ['link' => $link]);
     }
