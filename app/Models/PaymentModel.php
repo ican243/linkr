@@ -10,7 +10,10 @@
       protected $primaryKey       = 'id';
       protected $useAutoIncrement = true;
       protected $returnType       = 'array';
-      protected $allowedFields    = ['user_id', 'order_id', 'amount', 'plan', 'status', 'payment_key', 'method', 'receipt_url', 'approved_at'];
+      protected $allowedFields    = [
+          'user_id', 'order_id', 'amount', 'plan', 'status', 'payment_key', 'method', 'receipt_url',
+          'admin_id', 'admin_memo', 'refunded_at', 'cancel_reason', 'toss_response', 'approved_at',
+      ];
       
       protected $useTimestamps = true;
       protected $dateFormat    = 'datetime';

@@ -17,6 +17,7 @@
             <?php if ($isAdminLoggedIn) : ?>
                 <div class="d-flex gap-2 ms-auto">
                     <a href="/admin/dashboard" class="btn btn-outline-light btn-sm">대시보드</a>
+                    <a href="/admin/payments" class="btn btn-outline-light btn-sm">결제 관리</a>
                     <a href="/admin/settings" class="btn btn-outline-light btn-sm">설정</a>
                     <a href="/admin/logout" class="btn btn-outline-light btn-sm">관리자 로그아웃</a>
                 </div>

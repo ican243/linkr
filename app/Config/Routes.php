@@ -50,6 +50,10 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
     $routes->post('links/(:num)/delete', 'Dashboard::deleteLink/$1', ['filter' => 'adminAuth']);
     $routes->get('settings', 'Settings::form', ['filter' => 'adminAuth']);
     $routes->post('settings', 'Settings::update', ['filter' => 'adminAuth']);
+    $routes->get('payments', 'Payments::index', ['filter' => 'adminAuth']);
+    $routes->post('payments/(:num)/refund', 'Payments::refund/$1', ['filter' => 'adminAuth']);
+    $routes->post('payments/(:num)/status', 'Payments::updateStatus/$1', ['filter' => 'adminAuth']);
+    $routes->post('payments/(:num)/memo', 'Payments::updateMemo/$1', ['filter' => 'adminAuth']);
 });
 
 // URL 단축 핵심 기능 (로그인 필요 — links.user_id가 필수값이라 로그인 없이는 링크를 만들 수 없음)

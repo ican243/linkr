@@ -105,11 +105,13 @@ class Payment extends BaseController
         // receipt.url은 토스가 발급해주는 실제 영수증 페이지 링크. 결제 내역 화면의
         // "영수증 보기" 버튼에 그대로 씀 (우리 쪽에서 영수증을 따로 만들 필요 없음).
         $model->update($payment['id'], [
-            'status'      => 'completed',
-            'payment_key' => $paymentKey,
-            'method'      => $result['method'] ?? null,
-            'receipt_url' => $result['receipt']['url'] ?? null,
-            'approved_at' => date('Y-m-d H:i:s'),
+            'status'        => 'completed',
+            'payment_key'   => $paymentKey,
+            'method'        => $result['method'] ?? null,
+            'receipt_url'   => $result['receipt']['url'] ?? null,
+            // 관리자 결제 상세 모달에서 원본 그대로 보여주는 용도 (문제 생겼을 때 디버깅용).
+            'toss_response' => json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'approved_at'   => date('Y-m-d H:i:s'),
         ]);
 
         // 결제 당시(checkout) 저장해둔 요금제로 업그레이드. 예전엔 'pro'로 고정되어 있어서,
