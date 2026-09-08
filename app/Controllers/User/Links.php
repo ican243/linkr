@@ -31,7 +31,18 @@ class Links extends BaseController
         if ($status === 'password') {
             $model->where('password IS NOT NULL');
         } elseif ($status === 'expired') {
-            $model->where('expires_at IS NOT NULL')->where('expires_at <', date('Y-m-d H:i:s'));
+            // 시간이 지나서 만료됐거나(expires_at), 클릭 한도에 도달해서(max_clicks) 죽은 링크 둘 다
+            // "만료됨"으로 취급함(user/links.php의 배지 표시 기준과 동일하게).
+            $model->groupStart()
+                ->groupStart()
+                    ->where('expires_at IS NOT NULL')
+                    ->where('expires_at <', date('Y-m-d H:i:s'))
+                ->groupEnd()
+                ->orGroupStart()
+                    ->where('max_clicks IS NOT NULL')
+                    ->where('click_count >= max_clicks', null, false)
+                ->groupEnd()
+            ->groupEnd();
         }
 
         if ($sort === 'oldest') {

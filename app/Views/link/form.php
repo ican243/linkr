@@ -28,19 +28,44 @@
         <div class="mb-3">
             <label class="form-label">커스텀 URL (선택 — 비우면 랜덤 코드로 생성됨)</label>
             <div class="input-group">
-                <span class="input-group-text"><?= esc(base_url()) ?></span>
+                <span class="input-group-text"><?= esc(short_url_prefix($user ?? null)) ?></span>
                 <input type="text" name="custom_alias" placeholder="my-link" pattern="[A-Za-z0-9_-]{3,30}" maxlength="30" class="form-control">
             </div>
             <div class="form-text">영문, 숫자, -, _ 만 사용해서 3~30자로 입력해주세요.</div>
         </div>
         <div class="mb-3">
             <label class="form-label">비밀번호 (선택 — 설정하면 접속 시 비밀번호를 입력해야 이동됨)</label>
-            <input type="password" name="password" placeholder="입력 안 하면 보호 없음" class="form-control">
+            <input type="password" name="password" placeholder="입력 안 하면 보호 없음"
+                   class="form-control" <?= ($user['plan'] ?? 'free') === 'free' ? 'disabled' : '' ?>>
+            <?php if (($user['plan'] ?? 'free') === 'free') : ?>
+                <div class="form-text">비밀번호 보호는 <a href="/pricing">프로 요금제</a>부터 사용할 수 있습니다.</div>
+            <?php endif ?>
         </div>
-        <div class="mb-3">
-            <label class="form-label">만료일 (선택 — 설정하면 이 시각 이후엔 링크가 무효화됨)</label>
-            <input type="datetime-local" name="expires_at" class="form-control">
-        </div>
+        <?php if (($user['plan'] ?? 'free') === 'free') : ?>
+            <?php
+                $nowKst = utc_to_kst_local(date('Y-m-d H:i:s'));
+                $maxKst = utc_to_kst_local(date('Y-m-d H:i:s', strtotime('+' . \App\Controllers\Link::FREE_PLAN_MAX_EXPIRY_DAYS . ' days')));
+            ?>
+            <div class="mb-3">
+                <label class="form-label">만료일 (무료 요금제는 필수 — 최대 <?= \App\Controllers\Link::FREE_PLAN_MAX_EXPIRY_DAYS ?>일, 비워두면 <?= \App\Controllers\Link::FREE_PLAN_MAX_EXPIRY_DAYS ?>일 후로 자동 설정됨)</label>
+                <input type="datetime-local" name="expires_at" class="form-control" min="<?= esc($nowKst) ?>" max="<?= esc($maxKst) ?>">
+            </div>
+        <?php else : ?>
+            <div class="mb-3">
+                <label class="form-label">만료일 (선택 — 비우면 무제한, 설정하면 이 시각 이후엔 링크가 무효화됨)</label>
+                <input type="datetime-local" name="expires_at" class="form-control">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">만료 시 대체 URL (선택 — 만료 후에도 이 주소로 계속 이동시킴)</label>
+                <input type="url" name="fallback_url" placeholder="https://example.com/renewed" class="form-control">
+            </div>
+        <?php endif ?>
+        <?php if (($user['plan'] ?? 'free') === 'enterprise') : ?>
+            <div class="mb-3">
+                <label class="form-label">클릭 한도 (선택 — 도달하면 만료된 것처럼 처리됨)</label>
+                <input type="number" name="max_clicks" min="1" placeholder="예: 1000" class="form-control">
+            </div>
+        <?php endif ?>
         <button type="submit" class="btn btn-primary w-100">단축하기</button>
     </form>
 

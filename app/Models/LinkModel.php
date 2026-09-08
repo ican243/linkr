@@ -10,7 +10,7 @@ class LinkModel extends Model
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
-    protected $allowedFields    = ['user_id', 'original_url', 'title', 'short_code', 'password', 'expires_at', 'click_count'];
+    protected $allowedFields    = ['user_id', 'original_url', 'title', 'short_code', 'password', 'expires_at', 'click_count', 'fallback_url', 'max_clicks', 'expiry_notified_at'];
 
     protected $useTimestamps = true;
     protected $dateFormat    = 'datetime';

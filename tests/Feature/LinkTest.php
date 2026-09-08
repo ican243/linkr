@@ -23,8 +23,8 @@ final class LinkTest extends CIUnitTestCase
         ]);
     }
 
-    // 비밀번호 보호/만료일은 pricing.php에서 "프로 요금제부터"라고 안내하는 기능이라,
-    // 무료 회원이 둘 중 하나라도 채워서 만들려고 하면 막혀야 한다.
+    // 비밀번호 보호는 pricing.php에서 "프로 요금제부터"라고 안내하는 기능이라,
+    // 무료 회원이 채워서 만들려고 하면 막혀야 한다. (만료일은 이제 무료도 사용함 — 아래 별도 테스트)
     public function testFreePlanCannotCreatePasswordProtectedLink(): void
     {
         $userId = $this->loginAsNewUser('linktest-freepw@example.com', 'free');
@@ -36,7 +36,7 @@ final class LinkTest extends CIUnitTestCase
                 'password'      => 'secret1234',
             ]);
 
-        $result->assertSee('비밀번호 보호와 만료일 설정은 프로 요금제부터 사용할 수 있습니다.');
+        $result->assertSee('비밀번호 보호는 프로 요금제부터 사용할 수 있습니다.');
         $this->assertSame(0, (new LinkModel())->where('user_id', $userId)->countAllResults());
     }
 

@@ -47,6 +47,7 @@
                     <th>단축 주소</th>
                     <th>원본 주소</th>
                     <th>상태</th>
+                    <th>만료일</th>
                     <th>클릭 수</th>
                     <th>생성일</th>
                     <th></th>
@@ -54,21 +55,37 @@
             </thead>
             <tbody>
                 <?php foreach ($links as $link) : ?>
-                    <?php $isExpired = ! empty($link['expires_at']) && strtotime($link['expires_at']) < time(); ?>
+                    <?php
+                        $isExpired    = ! empty($link['expires_at']) && strtotime($link['expires_at']) < time();
+                        $isClickLimit = ! empty($link['max_clicks']) && (int) $link['click_count'] >= (int) $link['max_clicks'];
+                        $isDead       = $isExpired || $isClickLimit;
+                        $expiringSoon = ! $isExpired && ! empty($link['expires_at']) && strtotime($link['expires_at']) < strtotime('+3 days');
+                    ?>
                     <tr>
                         <td><img src="<?= esc(base_url('qr/' . $link['short_code'])) ?>" alt="QR" width="60" height="60"></td>
                         <td><?= ! empty($link['title']) ? esc($link['title']) : '<span class="text-muted">—</span>' ?></td>
                         <td><a href="<?= esc(short_url($link)) ?>" target="_blank" rel="noopener noreferrer"><?= esc(short_url($link)) ?></a></td>
                         <td class="text-truncate" style="max-width:220px;"><?= esc($link['original_url']) ?></td>
                         <td>
-                            <?php if ($isExpired) : ?>
+                            <?php if ($isDead) : ?>
                                 <span class="badge bg-secondary">만료됨</span>
                             <?php endif ?>
                             <?php if (! empty($link['password'])) : ?>
                                 <span class="badge bg-warning text-dark">비밀번호</span>
                             <?php endif ?>
                         </td>
-                        <td><?= (int) $link['click_count'] ?></td>
+                        <td>
+                            <?php if (empty($link['expires_at'])) : ?>
+                                <span class="badge bg-light text-dark border">무제한</span>
+                            <?php elseif ($isExpired) : ?>
+                                <span class="badge bg-danger">만료됨</span>
+                            <?php elseif ($expiringSoon) : ?>
+                                <span class="badge bg-warning text-dark"><?= esc(utc_to_kst_local($link['expires_at'], 'Y-m-d H:i')) ?></span>
+                            <?php else : ?>
+                                <span class="small"><?= esc(utc_to_kst_local($link['expires_at'], 'Y-m-d H:i')) ?></span>
+                            <?php endif ?>
+                        </td>
+                        <td><?= (int) $link['click_count'] ?><?= ! empty($link['max_clicks']) ? ' / ' . (int) $link['max_clicks'] : '' ?></td>
                         <td><?= esc($link['created_at']) ?></td>
                         <td class="text-nowrap">
                             <a href="/links/<?= esc($link['short_code']) ?>/stats" class="btn btn-sm btn-outline-primary">통계</a>
