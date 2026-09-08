@@ -45,6 +45,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
     $routes->post('login', 'Auth::login');
     $routes->get('logout', 'Auth::logout');
     $routes->get('dashboard', 'Dashboard::index', ['filter' => 'adminAuth']);
+    $routes->get('users/(:num)', 'Dashboard::show/$1', ['filter' => 'adminAuth']);
     $routes->post('users/(:num)/plan', 'Dashboard::updateUserPlan/$1', ['filter' => 'adminAuth']);
     $routes->post('users/(:num)/delete', 'Dashboard::deleteUser/$1', ['filter' => 'adminAuth']);
     $routes->post('links/(:num)/delete', 'Dashboard::deleteLink/$1', ['filter' => 'adminAuth']);

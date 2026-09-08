@@ -6,6 +6,9 @@
 <?php if (session()->getFlashdata('message')) : ?>
     <div class="alert alert-success"><?= esc(session()->getFlashdata('message')) ?></div>
 <?php endif ?>
+<?php if (session()->getFlashdata('error')) : ?>
+    <div class="alert alert-danger"><?= esc(session()->getFlashdata('error')) ?></div>
+<?php endif ?>
 
 <div class="row mb-4 text-center">
     <div class="col">
@@ -48,18 +51,15 @@
                 <?php foreach ($users as $user) : ?>
                     <tr>
                         <td><?= (int) $user['id'] ?></td>
-                        <td><?= esc($user['email']) ?></td>
+                        <td><a href="/admin/users/<?= (int) $user['id'] ?>"><?= esc($user['email']) ?></a></td>
                         <td><?= esc($user['name'] ?? '-') ?></td>
                         <td>
-                            <form action="/admin/users/<?= (int) $user['id'] ?>/plan" method="post" class="d-flex gap-1">
-                                <?= csrf_field() ?>
-                                <select name="plan" class="form-select form-select-sm" style="width:auto;">
-                                    <?php foreach (['free' => '무료', 'pro' => '프로', 'enterprise' => '엔터프라이즈'] as $value => $label) : ?>
-                                        <option value="<?= esc($value) ?>" <?= $user['plan'] === $value ? 'selected' : '' ?>><?= esc($label) ?></option>
-                                    <?php endforeach ?>
-                                </select>
-                                <button type="submit" class="btn btn-sm btn-outline-primary">변경</button>
-                            </form>
+                            <div><?= esc(['free' => '무료', 'pro' => '프로', 'enterprise' => '엔터프라이즈'][$user['plan']] ?? $user['plan']) ?>
+                                <?php if (! empty($user['plan_expires_at'])) : ?>
+                                    <span class="text-muted small">(~<?= esc(date('Y-m-d', strtotime($user['plan_expires_at']))) ?>)</span>
+                                <?php endif ?>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-1" data-bs-toggle="modal" data-bs-target="#planModal<?= (int) $user['id'] ?>">변경</button>
                         </td>
                         <td><?= esc($user['created_at']) ?></td>
                         <td>
@@ -74,6 +74,45 @@
             </tbody>
         </table>
     </div>
+
+    <!-- 요금제 변경 모달 (회원마다 하나) -->
+    <?php foreach ($users as $user) : ?>
+        <div class="modal fade" id="planModal<?= (int) $user['id'] ?>" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form action="/admin/users/<?= (int) $user['id'] ?>/plan" method="post">
+                        <?= csrf_field() ?>
+                        <div class="modal-header">
+                            <h2 class="modal-title h5"><?= esc($user['email']) ?> 요금제 변경</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label small">요금제</label>
+                                <select name="plan" class="form-select form-select-sm">
+                                    <?php foreach (['free' => '무료', 'pro' => '프로', 'enterprise' => '엔터프라이즈'] as $value => $label) : ?>
+                                        <option value="<?= esc($value) ?>" <?= $user['plan'] === $value ? 'selected' : '' ?>><?= esc($label) ?></option>
+                                    <?php endforeach ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small">이용기간 (개월) — 무료로 변경 시에는 무시됨</label>
+                                <input type="number" name="months" class="form-control form-control-sm" min="1" value="1">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small">변경 사유 (필수)</label>
+                                <textarea name="reason" class="form-control form-control-sm" rows="2" required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">취소</button>
+                            <button type="submit" class="btn btn-primary btn-sm">변경 적용</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    <?php endforeach ?>
 <?php endif ?>
 
 <h2 class="h4">전체 링크 목록</h2>

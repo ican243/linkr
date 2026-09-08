@@ -37,17 +37,22 @@ class Payments extends BaseController
             'pager'           => $pager,
             'currentPlan'     => $user['plan'],
             'planLabels'      => self::PLAN_LABELS,
-            'nextBillingDate' => $this->nextBillingDate($userId, $user['plan']),
+            'nextBillingDate' => $this->nextBillingDate($userId, $user['plan'], $user['plan_expires_at'] ?? null),
         ]);
     }
 
-    // "다음 결제 예정일"을 별도로 저장해두지 않고, 가장 최근 완료된 결제일 + 1개월로 계산함.
-    // 지금은 자동 정기결제가 아니라 매달 수동으로 다시 결제하는 구조라 이렇게 어림잡는 것.
-    // 무료 요금제는 결제 자체가 없으므로 null을 반환.
-    private function nextBillingDate(int $userId, string $plan): ?string
+    // "다음 결제 예정일" = users.plan_expires_at을 그대로 보여줌 (관리자 강제부여든 실제
+    // 결제든 이제 전부 이 컬럼 하나에 기록되므로, 여기서 다시 계산할 필요가 없음).
+    // 다만 이 컬럼이 생기기 전(예전)에 결제한 회원은 값이 비어있을 수 있어서,
+    // 그런 경우에만 예전 방식(최근 완료 결제일+1개월)으로 한 번 더 추정해서 보여줌.
+    private function nextBillingDate(int $userId, string $plan, ?string $planExpiresAt): ?string
     {
         if ($plan === 'free') {
             return null;
+        }
+
+        if (! empty($planExpiresAt)) {
+            return date('Y-m-d', strtotime($planExpiresAt));
         }
 
         $latestCompleted = (new PaymentModel())

@@ -116,7 +116,12 @@ class Payment extends BaseController
 
         // 결제 당시(checkout) 저장해둔 요금제로 업그레이드. 예전엔 'pro'로 고정되어 있어서,
         // 엔터프라이즈를 결제해도 프로로 잘못 올라가는 문제가 있었음.
-        (new UserModel())->update($payment['user_id'], ['plan' => $payment['plan']]);
+        // plan_expires_at은 "지금부터 1개월"로 기록 — 관리자가 강제로 부여할 때(개월수 입력)와
+        // 계산 방식을 통일해서, 결제 내역 화면의 "다음 결제 예정일"이 항상 이 값 하나만 보면 되게 함.
+        (new UserModel())->update($payment['user_id'], [
+            'plan'            => $payment['plan'],
+            'plan_expires_at' => date('Y-m-d H:i:s', strtotime('+1 month')),
+        ]);
 
         return view('payment/success', ['payment' => $payment]);
     }

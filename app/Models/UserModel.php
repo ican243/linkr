@@ -10,7 +10,7 @@ class UserModel extends Model
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
-    protected $allowedFields    = ['email', 'password', 'name', 'plan', 'google_id', 'naver_id', 'kakao_id', 'custom_domain', 'custom_domain_verified'];
+    protected $allowedFields    = ['email', 'password', 'name', 'plan', 'plan_expires_at', 'google_id', 'naver_id', 'kakao_id', 'custom_domain', 'custom_domain_verified'];
 
     protected $useTimestamps = true;
     protected $dateFormat    = 'datetime';
