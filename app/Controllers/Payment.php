@@ -96,7 +96,9 @@ class Payment extends BaseController
         } catch (\Throwable $e) {
             log_message('error', '토스 결제 승인 실패: ' . $e->getMessage());
 
-            return redirect()->to('/payment/fail')->with('error', '결제 승인 중 오류가 발생했습니다.');
+            // orderId를 같이 넘겨야 fail()이 이 결제 건을 찾아서 'failed'로 표시할 수 있음.
+            // 예전엔 orderId 없이 리다이렉트해서, 승인 실패한 결제가 DB에 계속 'pending'으로 남는 버그가 있었음.
+            return redirect()->to('/payment/fail?orderId=' . urlencode($orderId))->with('error', '결제 승인 중 오류가 발생했습니다.');
         }
 
         $result = json_decode($response->getBody(), true);
