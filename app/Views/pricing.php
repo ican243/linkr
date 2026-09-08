@@ -29,7 +29,7 @@ $enterprisePriceYearlySaved = ($enterprisePrice - $enterprisePriceYearly) * 12;
     </div>
 <?php endif ?>
 <div class="alert alert-warning text-center small">
-    ⚠️ 결제 시스템은 아직 준비 중입니다. 지금은 요금제 안내만 확인하실 수 있어요.
+    ⚠️나에게 맞는 요금제를 선택하고 Linkr의 모든 기능을 활용해보세요️⚠️
 </div>
 
 <!-- 요금제 카드 -->
@@ -143,7 +143,7 @@ $enterprisePriceYearlySaved = ($enterprisePrice - $enterprisePriceYearly) * 12;
             </button>
         </h3>
         <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
-            <div class="accordion-body">네, 언제든 상위/하위 요금제로 변경할 수 있도록 준비 중입니다. (결제 시스템 연동 후 지원 예정)</div>
+            <div class="accordion-body">네, 언제든 상위/하위 요금제로 변경할 수 있도록 준비 중입니다.</div>
         </div>
     </div>
     <div class="accordion-item">
@@ -163,7 +163,7 @@ $enterprisePriceYearlySaved = ($enterprisePrice - $enterprisePriceYearly) * 12;
             </button>
         </h3>
         <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
-            <div class="accordion-body">결제 후 7일 이내에는 전액 환불이 가능하도록 준비 중입니다. (결제 시스템 연동 후 실제 적용 예정)</div>
+            <div class="accordion-body">결제 후 7일 이내에는 전액 환불이 가능하도록 준비 중입니다.</div>
         </div>
     </div>
     <div class="accordion-item">
