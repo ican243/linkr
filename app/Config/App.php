@@ -40,7 +40,9 @@ class App extends BaseConfig
      * something else. If you have configured your web server to remove this file
      * from your site URIs, set this variable to an empty string.
      */
-    public string $indexPage = 'index.php';
+    // nginx가 모든 주소를 index.php로 넘겨주므로(try_files ... /index.php) 주소에는 붙이지 않음.
+    // 'index.php'로 두면 redirect()/site_url()이 만드는 주소가 /index.php/auth/login 처럼 보임.
+    public string $indexPage = '';
 
     /**
      * --------------------------------------------------------------------------
