@@ -27,6 +27,9 @@ class Link extends BaseController
         'auth', 'register', 'login', 'logout', 'admin', 'shorten',
         'dashboard', 'account', 'custom-domain', 'links', 'qr', 'pricing', 'stats',
         'api', 'api-keys', 'payment',
+        // 아래는 나중에 추가된 페이지/경로들 — 같은 이름의 커스텀 링크를 만들면 그 페이지가 먼저 열려서 링크가 동작하지 않음
+        // (assets는 CSS/JS/이미지가 들어있는 실제 폴더라 nginx가 먼저 가로챔)
+        'about', 'privacy', 'demo-preview', 'assets',
     ];
 
     // 무료 요금제 만료일 상한(일). 무료는 만료일을 아예 안 걸 수는 없고(생성 시 기본값도 이만큼
@@ -161,18 +164,21 @@ class Link extends BaseController
     }
 
     // 만료일 입력을 요금제 정책에 맞게 검증/변환한다.
-    // - 무료: 안 입력하면 지금부터 30일 후로 자동 설정, 입력해도 30일 이내로만 허용
+    // - 무료: 안 입력하면 기준 시각부터 30일 후로 자동 설정, 입력해도 기준 시각부터 30일 이내로만 허용
     // - 프로/엔터프라이즈: 안 입력하면 무제한(null), 입력하면 그대로(상한 없음)
+    // 기준 시각($baseTime): 새로 만들 땐 지금, 수정할 땐 "링크를 처음 만든 시각".
+    // (수정할 때도 지금 기준으로 하면, 무료 회원이 수정 버튼만 눌러서 만료일을 30일씩 계속 늘릴 수 있었음)
     // 반환값의 'value'는 DB 저장용 UTC 문자열(또는 null), 'error'는 실패 시 화면에 보여줄 메시지.
-    private function resolveExpiresAt(string $plan, ?string $rawInput): array
+    private function resolveExpiresAt(string $plan, ?string $rawInput, ?string $baseTime = null): array
     {
         $rawInput = trim((string) $rawInput);
 
         if ($plan === 'free') {
-            if ($rawInput === '') {
-                $defaultUtc = date('Y-m-d H:i:s', strtotime('+' . self::FREE_PLAN_MAX_EXPIRY_DAYS . ' days'));
+            $base   = $baseTime !== null ? strtotime($baseTime) : time();
+            $capUtc = $base + self::FREE_PLAN_MAX_EXPIRY_DAYS * 86400;
 
-                return ['value' => $defaultUtc, 'error' => null];
+            if ($rawInput === '') {
+                return ['value' => date('Y-m-d H:i:s', $capUtc), 'error' => null];
             }
 
             $utc = kst_input_to_utc($rawInput);
@@ -181,10 +187,12 @@ class Link extends BaseController
                 return ['value' => null, 'error' => '만료일 형식이 올바르지 않습니다.'];
             }
 
-            $capUtc = strtotime('+' . self::FREE_PLAN_MAX_EXPIRY_DAYS . ' days');
-
             if (strtotime($utc) > $capUtc) {
-                return ['value' => null, 'error' => '무료 요금제는 만료일을 최대 ' . self::FREE_PLAN_MAX_EXPIRY_DAYS . '일 이내로만 설정할 수 있습니다.'];
+                $message = $baseTime !== null
+                    ? '무료 요금제는 링크를 만든 날부터 최대 ' . self::FREE_PLAN_MAX_EXPIRY_DAYS . '일까지만 설정할 수 있습니다. (최대 ' . utc_to_kst_local(date('Y-m-d H:i:s', $capUtc), 'Y-m-d H:i') . ')'
+                    : '무료 요금제는 만료일을 최대 ' . self::FREE_PLAN_MAX_EXPIRY_DAYS . '일 이내로만 설정할 수 있습니다.';
+
+                return ['value' => null, 'error' => $message];
             }
 
             return ['value' => $utc, 'error' => null];
@@ -255,7 +263,7 @@ class Link extends BaseController
             ]);
         }
 
-        $expiryResult = $this->resolveExpiresAt($user['plan'], $expiresAt);
+        $expiryResult = $this->resolveExpiresAt($user['plan'], $expiresAt, $link['created_at']);
 
         if ($expiryResult['error'] !== null) {
             return view('link/edit', ['link' => $link, 'user' => $user, 'error' => $expiryResult['error']]);
@@ -438,8 +446,23 @@ class Link extends BaseController
 
     private function doRedirect(array $link)
     {
-        $model = new LinkModel();
-        $model->update($link['id'], ['click_count' => $link['click_count'] + 1]);
+        // 클릭 수 +1을 DB에서 한 번에 처리 (click_count = click_count + 1).
+        // 예전처럼 "읽어온 값 + 1"을 저장하면, 동시에 여러 명이 클릭할 때 서로 같은 값을 덮어써서 클릭이 누락되고
+        // 100회 제한 링크가 100회를 넘게 열릴 수 있었음. 클릭 제한이 있으면 "아직 한도 미만일 때만" +1 되게 조건을 걸고,
+        // +1이 안 됐으면(그 사이 다른 클릭으로 한도가 찬 것) 만료된 링크로 처리함.
+        $db = db_connect();
+        $db->table('links')
+            ->set('click_count', 'click_count + 1', false)
+            ->where('id', $link['id'])
+            ->groupStart()
+                ->where('max_clicks', null)
+                ->orWhere('click_count < max_clicks', null, false)
+            ->groupEnd()
+            ->update();
+
+        if ($db->affectedRows() === 0) {
+            return $this->handleUnavailable($link);
+        }
 
         $logModel = new ClickLogModel();
         $logModel->insert([

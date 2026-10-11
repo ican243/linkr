@@ -119,7 +119,7 @@ final class PlanChangeTest extends CIUnitTestCase
         $this->assertSame('new', $payment['type']);
     }
 
-    // 더 낮은 요금제로는 checkout()이 아니라 다운그레이드 예약을 쓰라고 안내해야 함
+    // 더 낮은 요금제로는 checkout()으로 결제할 수 없고, 이용 기간이 끝난 뒤 결제하라고 안내해야 함
     public function testCheckoutRejectsDowngradeDirection(): void
     {
         $userId = $this->createUser('checkoutdowngrade@example.com', 'enterprise', date('Y-m-d H:i:s', strtotime('+10 days')));
@@ -127,26 +127,40 @@ final class PlanChangeTest extends CIUnitTestCase
         $result = $this->withSession(['isLoggedIn' => true, 'user_id' => $userId])->get('/payment/checkout?plan=pro');
 
         $result->assertRedirectTo('/pricing');
-        $result->assertSessionHas('error', '더 낮은 요금제는 다운그레이드 예약을 이용해주세요.');
+        $result->assertSessionHas('error', '더 낮은 유료 요금제는 지금 이용 기간이 끝난 뒤 결제할 수 있어요.');
     }
 
-    // 3. 다운그레이드 예약 후 만료일에 전환
+    // 3. 무료 전환 예약 후 만료일에 전환
     public function testDowngradeIsScheduledNotAppliedImmediately(): void
     {
         $expiresAt = date('Y-m-d H:i:s', strtotime('+10 days'));
         $userId    = $this->createUser('scheduledowngrade@example.com', 'enterprise', $expiresAt);
 
         $result = $this->withSession(['isLoggedIn' => true, 'user_id' => $userId])
-            ->post('/pricing/downgrade', [csrf_token() => csrf_hash(), 'plan' => 'pro']);
+            ->post('/pricing/downgrade', [csrf_token() => csrf_hash(), 'plan' => 'free']);
 
         $result->assertRedirectTo('/pricing');
 
         $user = (new UserModel())->find($userId);
         $this->assertSame('enterprise', $user['plan']); // 아직 안 바뀜
-        $this->assertSame('pro', $user['next_plan']);
+        $this->assertSame('free', $user['next_plan']);
         $this->assertSame($expiresAt, $user['next_plan_at']);
     }
 
+    // 자동 결제가 없어서, 하위 "유료" 요금제(엔터프라이즈 → 프로)는 예약할 수 없음 (기간이 끝난 뒤 새로 결제)
+    public function testCannotScheduleDowngradeToPaidPlan(): void
+    {
+        $userId = $this->createUser('schedulepaid@example.com', 'enterprise', date('Y-m-d H:i:s', strtotime('+10 days')));
+
+        $result = $this->withSession(['isLoggedIn' => true, 'user_id' => $userId])
+            ->post('/pricing/downgrade', [csrf_token() => csrf_hash(), 'plan' => 'pro']);
+
+        $result->assertRedirectTo('/pricing');
+        $this->assertNull((new UserModel())->find($userId)['next_plan']);
+    }
+
+    // 예약 시점이 지나면 무료로 전환됨. 예전 버전에서 유료 하위 요금제(프로)로 예약해둔 경우도
+    // 그 기간의 결제가 없으므로 무료로 전환되어야 함 (예전엔 프로가 기간 없이 무기한 유지되는 버그가 있었음).
     public function testDowngradeAppliesAutomaticallyOncePastAt(): void
     {
         $userId = $this->createUser('autotransition@example.com', 'enterprise', null);
@@ -161,9 +175,54 @@ final class PlanChangeTest extends CIUnitTestCase
         $result->assertOK();
 
         $user = (new UserModel())->find($userId);
-        $this->assertSame('pro', $user['plan']);
+        $this->assertSame('free', $user['plan']);
+        $this->assertNull($user['plan_expires_at']);
         $this->assertNull($user['next_plan']);
         $this->assertNull($user['next_plan_at']);
+    }
+
+    // 유료 이용 기간이 지나면 (예약이 없어도) 접속하는 순간 무료로 전환됨
+    public function testExpiredPaidPlanFallsBackToFree(): void
+    {
+        $userId = $this->createUser('expiredpro@example.com', 'pro', date('Y-m-d H:i:s', strtotime('-1 hour')));
+
+        $this->withSession(['isLoggedIn' => true, 'user_id' => $userId])->get('/dashboard')->assertOK();
+
+        $this->assertSame('free', (new UserModel())->find($userId)['plan']);
+    }
+
+    // 기간이 비어 있는 유료 계정(기간 제한 없이 부여된 계정, 예: 체험 계정)은 만료되지 않음
+    public function testPaidPlanWithoutExpiryIsKept(): void
+    {
+        $userId = $this->createUser('noexpiry@example.com', 'enterprise', null);
+
+        $this->withSession(['isLoggedIn' => true, 'user_id' => $userId])->get('/dashboard')->assertOK();
+
+        $this->assertSame('enterprise', (new UserModel())->find($userId)['plan']);
+    }
+
+    // 크론 명령(plan:apply-downgrades)이 쓰는 일괄 처리: 접속하지 않은 회원도 전환됨
+    public function testApplyAllDueConvertsExpiredUsers(): void
+    {
+        $expiredId = $this->createUser('cron-expired@example.com', 'enterprise', date('Y-m-d H:i:s', strtotime('-2 days')));
+        $activeId  = $this->createUser('cron-active@example.com', 'pro', date('Y-m-d H:i:s', strtotime('+2 days')));
+
+        $this->assertSame(1, \App\Libraries\PlanTransition::applyAllDue());
+
+        $this->assertSame('free', (new UserModel())->find($expiredId)['plan']);
+        $this->assertSame('pro', (new UserModel())->find($activeId)['plan']);
+    }
+
+    // 관리자가 회원을 삭제했는데 그 사람의 로그인 세션이 남아 있으면, 500 오류 대신 로그인 화면으로 보내야 함
+    public function testDeletedUserSessionIsLoggedOut(): void
+    {
+        $userId = $this->createUser('deleted@example.com', 'free');
+        (new UserModel())->delete($userId);
+
+        $result = $this->withSession(['isLoggedIn' => true, 'user_id' => $userId])->get('/dashboard');
+
+        $this->assertTrue($result->isRedirect());
+        $this->assertStringEndsWith('/auth/login', $result->getRedirectUrl());
     }
 
     public function testCanCancelScheduledDowngrade(): void

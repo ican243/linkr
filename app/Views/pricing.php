@@ -86,7 +86,7 @@ $planState = static function (string $plan) use ($currentPlan, $planOrder): stri
                     <form action="/pricing/downgrade" method="post">
                         <?= csrf_field() ?>
                         <input type="hidden" name="plan" value="free">
-                        <button type="submit" class="btn btn-outline-secondary w-100">다운그레이드 예약</button>
+                        <button type="submit" class="btn btn-outline-secondary w-100">무료 전환 예약</button>
                     </form>
                 <?php endif ?>
             <?php else : ?>
@@ -116,15 +116,8 @@ $planState = static function (string $plan) use ($currentPlan, $planOrder): stri
                     이용 중<?php if (! empty($user['plan_expires_at'])) : ?> (~<?= esc(date('Y-m-d', strtotime($user['plan_expires_at']))) ?>)<?php endif ?>
                 </button>
             <?php elseif ($isLoggedIn && $proState === 'downgrade') : ?>
-                <?php if (! empty($user['next_plan'])) : ?>
-                    <button type="button" class="btn btn-outline-secondary w-100" disabled>예약됨</button>
-                <?php else : ?>
-                    <form action="/pricing/downgrade" method="post">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="plan" value="pro">
-                        <button type="submit" class="btn btn-outline-secondary w-100">다운그레이드 예약</button>
-                    </form>
-                <?php endif ?>
+                <?php // 자동 결제가 없어서, 엔터프라이즈 → 프로는 지금 기간이 끝난 뒤 프로를 새로 결제하는 방식 ?>
+                <button type="button" class="btn btn-outline-secondary w-100" disabled>이용 기간 종료 후 결제 가능</button>
             <?php else : ?>
                 <a href="<?= $isLoggedIn ? '/payment/checkout?plan=pro' : '/auth/register' ?>" class="btn btn-primary w-100"><?= $isLoggedIn && $currentPlan !== 'free' ? '업그레이드' : '프로 시작하기' ?></a>
             <?php endif ?>
@@ -202,7 +195,7 @@ $planState = static function (string $plan) use ($currentPlan, $planOrder): stri
             </button>
         </h3>
         <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
-            <div class="accordion-body">네, 이 페이지에서 언제든 변경할 수 있습니다. 상위 요금제로 올리면 지금 요금제의 남은 기간만큼 금액을 차감하고 바로 적용되며, 하위 요금제로 내리면 지금 이용 기간이 끝나는 날 자동으로 전환됩니다(그 전까지 예약 취소 가능).</div>
+            <div class="accordion-body">네, 이 페이지에서 언제든 변경할 수 있습니다. 상위 요금제로 올리면 지금 요금제의 남은 기간만큼 금액을 차감하고 바로 적용됩니다. 유료 요금제는 이용 기간(1개월)이 끝나면 무료로 돌아가며, 그 뒤 원하는 요금제를 다시 결제하면 됩니다. 무료 전환을 미리 예약해둘 수도 있어요(그 전까지 예약 취소 가능).</div>
         </div>
     </div>
     <div class="accordion-item">

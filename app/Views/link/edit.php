@@ -41,10 +41,11 @@
         <?php if (($user['plan'] ?? 'free') === 'free') : ?>
             <?php
                 $nowKst = utc_to_kst_local(date('Y-m-d H:i:s'));
-                $maxKst = utc_to_kst_local(date('Y-m-d H:i:s', strtotime('+' . \App\Controllers\Link::FREE_PLAN_MAX_EXPIRY_DAYS . ' days')));
+                // 무료는 "링크를 만든 날부터" 최대 30일 (Link::resolveExpiresAt과 같은 기준)
+                $maxKst = utc_to_kst_local(date('Y-m-d H:i:s', strtotime($link['created_at']) + \App\Controllers\Link::FREE_PLAN_MAX_EXPIRY_DAYS * 86400));
             ?>
             <div class="mb-3">
-                <label class="form-label">만료일 (무료 요금제는 필수 — 최대 <?= \App\Controllers\Link::FREE_PLAN_MAX_EXPIRY_DAYS ?>일, 비워두면 <?= \App\Controllers\Link::FREE_PLAN_MAX_EXPIRY_DAYS ?>일 후로 자동 재설정됨)</label>
+                <label class="form-label">만료일 (무료 요금제는 링크를 만든 날부터 최대 <?= \App\Controllers\Link::FREE_PLAN_MAX_EXPIRY_DAYS ?>일 — <?= esc(substr(str_replace('T', ' ', $maxKst), 0, 16)) ?>까지, 비워두면 이 날짜로 설정됨)</label>
                 <input type="datetime-local" name="expires_at" class="form-control" min="<?= esc($nowKst) ?>" max="<?= esc($maxKst) ?>" value="<?= esc($expiresAtKst) ?>">
             </div>
         <?php else : ?>

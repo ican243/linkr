@@ -47,7 +47,7 @@ class Payment extends BaseController
         }
 
         if (self::PLAN_ORDER[$plan] < self::PLAN_ORDER[$currentPlan]) {
-            return redirect()->to('/pricing')->with('error', '더 낮은 요금제는 다운그레이드 예약을 이용해주세요.');
+            return redirect()->to('/pricing')->with('error', '더 낮은 유료 요금제는 지금 이용 기간이 끝난 뒤 결제할 수 있어요.');
         }
 
         $settingModel = new SettingModel();

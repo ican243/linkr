@@ -39,6 +39,18 @@ final class ApiLinksTest extends CIUnitTestCase
         return ['userId' => $userId, 'apiKey' => $rawKey];
     }
 
+    // 이용 기간이 끝난 엔터프라이즈 회원은 크론을 기다리지 않고 바로 API가 막혀야 함
+    public function testExpiredEnterpriseCannotUseApi(): void
+    {
+        $data = $this->createUserWithApiKey('api-expired@example.com');
+        (new UserModel())->update($data['userId'], ['plan_expires_at' => date('Y-m-d H:i:s', strtotime('-1 hour'))]);
+
+        $result = $this->withHeaders(['Authorization' => 'Bearer ' . $data['apiKey']])->get('/api/v1/links');
+
+        $result->assertStatus(403);
+        $this->assertSame('free', (new UserModel())->find($data['userId'])['plan']);
+    }
+
     public function testListWithoutApiKeyReturns401(): void
     {
         $result = $this->get('/api/v1/links');

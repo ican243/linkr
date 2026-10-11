@@ -8,9 +8,11 @@ use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 
-// 로그인한 회원이 요청을 보낼 때마다, 예약해둔 다운그레이드(users.next_plan_at)가
-// 도달했으면 그 자리에서 바로 적용해준다("조회 시점 처리"). 로그아웃 상태거나 예약이
-// 없으면 DB 조회 자체가 거의 공짜라 성능 부담은 무시할 만한 수준.
+// 로그인한 회원이 요청을 보낼 때마다 회원 상태를 점검한다.
+// - 유료 이용 기간이 끝났으면(또는 예약한 전환 시점이 지났으면) 그 자리에서 무료로 전환("조회 시점 처리")
+// - 관리자가 회원을 삭제했는데 그 사람의 로그인 세션이 남아 있으면, 로그인 정보를 지워서 로그아웃 상태로 만듦
+//   (안 지우면 각 화면이 "없는 회원"의 요금제를 읽으려다 500 오류가 남)
+// 로그아웃 상태면 바로 통과하고, 로그인 상태여도 회원 1명 조회뿐이라 성능 부담은 거의 없음.
 class PlanTransitionFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
@@ -23,9 +25,13 @@ class PlanTransitionFilter implements FilterInterface
 
         $user = (new UserModel())->find($userId);
 
-        if ($user !== null) {
-            PlanTransition::applyIfDue($user);
+        if ($user === null) {
+            session()->remove(['user_id', 'user_email', 'isLoggedIn', 'is_demo']);
+
+            return;
         }
+
+        PlanTransition::applyIfDue($user);
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)

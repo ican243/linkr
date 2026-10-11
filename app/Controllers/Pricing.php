@@ -27,7 +27,9 @@ class Pricing extends BaseController
     }
 
     // 결제/환불 없이 "예약"만 함 — 지금 이용 중인 요금제의 만료 시각에 실제로 적용됨
-    // (PlanTransitionFilter가 로그인 요청마다 도달 여부를 확인해서 처리).
+    // (PlanTransitionFilter가 로그인 요청마다, 크론이 매시간 도달 여부를 확인해서 처리).
+    // 자동 결제가 없어서 기간이 끝나면 무료로 돌아가므로, 예약할 수 있는 건 "무료로 전환" 하나뿐.
+    // 하위 유료 요금제(엔터프라이즈 → 프로)는 지금 기간이 끝난 뒤 그 요금제를 새로 결제하면 됨.
     public function scheduleDowngrade()
     {
         if (! session()->get('isLoggedIn')) {
@@ -46,6 +48,10 @@ class Pricing extends BaseController
             return redirect()->to('/pricing')->with('error', '지금 요금제보다 낮은 요금제만 예약할 수 있습니다.');
         }
 
+        if ($targetPlan !== 'free') {
+            return redirect()->to('/pricing')->with('error', '하위 유료 요금제는 지금 이용 기간이 끝난 뒤 새로 결제하시면 됩니다.');
+        }
+
         if (empty($user['plan_expires_at'])) {
             return redirect()->to('/pricing')->with('error', '현재 이용기간 정보가 없어 예약할 수 없습니다.');
         }
@@ -55,7 +61,7 @@ class Pricing extends BaseController
             'next_plan_at' => $user['plan_expires_at'],
         ]);
 
-        return redirect()->to('/pricing')->with('message', '요금제 다운그레이드가 예약되었습니다.');
+        return redirect()->to('/pricing')->with('message', '이용 기간이 끝나면 무료로 전환되도록 예약했어요.');
     }
 
     public function cancelDowngrade()

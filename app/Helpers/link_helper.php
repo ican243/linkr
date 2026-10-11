@@ -2,6 +2,23 @@
 
 use App\Models\UserModel;
 
+if (! function_exists('custom_domain_active')) {
+    /**
+     * 이 회원의 커스텀 도메인을 지금 쓸 수 있는지.
+     * DNS 인증까지 끝났고, 커스텀 도메인이 포함된 유료 요금제(프로/엔터프라이즈)를 이용 중이어야 함.
+     * 무료로 내려가면 도메인 정보는 남겨두되 사용만 막음 → 다시 유료로 올리면 바로 다시 쓸 수 있음.
+     * (이용 기간이 끝났는데 아직 무료 전환 처리 전인 순간도 무료로 취급)
+     */
+    function custom_domain_active(?array $user): bool
+    {
+        return ! empty($user)
+            && ! empty($user['custom_domain'])
+            && ! empty($user['custom_domain_verified'])
+            && in_array($user['plan'], ['pro', 'enterprise'], true)
+            && ! \App\Libraries\PlanTransition::isDue($user);
+    }
+}
+
 if (! function_exists('short_url')) {
     /**
      * 링크 배열(short_code, user_id 포함)을 받아서 단축 URL 문자열을 만든다.
@@ -23,7 +40,7 @@ if (! function_exists('short_url')) {
 
             // SSL은 아직 지원 전이라(커스텀 도메인에 인증서가 없음) 당분간 http로만 생성함.
             // SSL 붙이면 이 부분만 https로 바꾸면 됨.
-            if (! empty($user) && ! empty($user['custom_domain']) && ! empty($user['custom_domain_verified'])) {
+            if (custom_domain_active($user)) {
                 return 'http://' . rtrim($user['custom_domain'], '/') . '/' . $link['short_code'];
             }
         }
@@ -39,7 +56,7 @@ if (! function_exists('short_url_prefix')) {
      */
     function short_url_prefix(?array $user): string
     {
-        if (! empty($user) && ! empty($user['custom_domain']) && ! empty($user['custom_domain_verified'])) {
+        if (custom_domain_active($user)) {
             return 'http://' . rtrim($user['custom_domain'], '/') . '/';
         }
 

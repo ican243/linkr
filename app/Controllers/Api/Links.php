@@ -4,6 +4,7 @@ namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
 use App\Controllers\Link;
+use App\Libraries\PlanTransition;
 use App\Models\ApiKeyModel;
 use App\Models\LinkModel;
 use App\Models\UserModel;
@@ -171,6 +172,15 @@ class Links extends BaseController
 
         $keyModel->update($apiKey['id'], ['last_used_at' => date('Y-m-d H:i:s')]);
 
-        return (new UserModel())->find($apiKey['user_id']);
+        $userModel = new UserModel();
+        $user      = $userModel->find($apiKey['user_id']);
+
+        // API는 로그인 세션이 없어서 PlanTransitionFilter가 돌지 않음 — 여기서 이용 기간 만료를 직접 확인
+        // (기간이 끝난 엔터프라이즈 회원이 크론이 돌기 전까지 API를 계속 쓰는 것 방지)
+        if ($user !== null && PlanTransition::applyIfDue($user)) {
+            $user = $userModel->find($user['id']);
+        }
+
+        return $user;
     }
 }

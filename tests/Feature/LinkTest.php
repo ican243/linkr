@@ -23,6 +23,71 @@ final class LinkTest extends CIUnitTestCase
         ]);
     }
 
+    // 나중에 추가된 페이지 이름(about 등)은 커스텀 주소로 쓸 수 없어야 함 (쓰면 열리지 않는 죽은 링크가 됨)
+    public function testReservedAliasesAreRejected(): void
+    {
+        $userId = $this->loginAsNewUser('linktest-reserved@example.com', 'pro');
+
+        foreach (['about', 'privacy', 'demo-preview', 'assets'] as $alias) {
+            $this->withSession(['isLoggedIn' => true, 'user_id' => $userId])
+                ->post('/shorten', [
+                    csrf_token()   => csrf_hash(),
+                    'original_url' => 'https://example.com',
+                    'custom_alias' => $alias,
+                ])
+                ->assertSee('이 커스텀 URL은 시스템에서 사용 중이라 선택할 수 없습니다.');
+        }
+
+        $this->assertSame(0, (new LinkModel())->where('user_id', $userId)->countAllResults());
+    }
+
+    // 무료 회원이 수정 버튼으로 만료일을 계속 늘릴 수 없어야 함: 기준은 "링크를 만든 날부터 30일"
+    public function testFreeEditCannotExtendExpiryBeyondCreation(): void
+    {
+        helper('link');
+        $userId    = $this->loginAsNewUser('linktest-extend@example.com', 'free');
+        $createdAt = date('Y-m-d H:i:s', strtotime('-20 days'));
+
+        $db = db_connect();
+        $db->table('links')->insert([
+            'user_id' => $userId, 'original_url' => 'https://example.com', 'short_code' => 'extnd1',
+            'expires_at' => date('Y-m-d H:i:s', strtotime('+10 days')), 'created_at' => $createdAt, 'updated_at' => $createdAt,
+        ]);
+
+        // 지금부터 25일 뒤 = 만든 날부터 45일 → 거부
+        $this->withSession(['isLoggedIn' => true, 'user_id' => $userId])
+            ->post('/links/extnd1/edit', [
+                csrf_token()   => csrf_hash(),
+                'original_url' => 'https://example.com',
+                'expires_at'   => utc_to_kst_local(date('Y-m-d H:i:s', strtotime('+25 days'))),
+            ])
+            ->assertSee('링크를 만든 날부터 최대 30일');
+
+        // 비워두면 "만든 날 + 30일"로 설정됨 (지금 + 30일이 아님)
+        $this->withSession(['isLoggedIn' => true, 'user_id' => $userId])
+            ->post('/links/extnd1/edit', [csrf_token() => csrf_hash(), 'original_url' => 'https://example.com', 'expires_at' => '']);
+
+        $link = (new LinkModel())->where('short_code', 'extnd1')->first();
+        $this->assertSame(date('Y-m-d H:i:s', strtotime($createdAt) + 30 * 86400), $link['expires_at']);
+    }
+
+    // 클릭 수는 DB에서 +1 되고, 클릭 제한에 도달하면 더 이상 이동하지 않아야 함
+    public function testClickLimitIsEnforcedAtomically(): void
+    {
+        $userId = $this->loginAsNewUser('linktest-clicks@example.com', 'enterprise');
+
+        (new LinkModel())->insert([
+            'user_id' => $userId, 'original_url' => 'https://example.com/limited', 'short_code' => 'limit2',
+            'max_clicks' => 2, 'click_count' => 0,
+        ]);
+
+        $this->get('/limit2')->assertRedirectTo('https://example.com/limited');
+        $this->get('/limit2')->assertRedirectTo('https://example.com/limited');
+        $this->assertFalse($this->get('/limit2')->isRedirect()); // 3번째는 만료 안내
+
+        $this->assertSame('2', (string) (new LinkModel())->where('short_code', 'limit2')->first()['click_count']);
+    }
+
     // 대시보드 "최근 링크" 표의 원본 주소 칸에 단축 주소가 아니라 실제 원본 주소가 나오는지.
     public function testDashboardShowsOriginalUrl(): void
     {
