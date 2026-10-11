@@ -18,6 +18,7 @@ $pageDescription = trim(strip_tags($this->renderSection('description')));
     <link href="<?= base_url('assets/css/theme.css') ?>" rel="stylesheet">
 </head>
 <body>
+    <?= $this->include('partials/demo_bar') ?>
     <!-- 화면이 좁으면(휴대폰) 메뉴가 햄버거 버튼(☰) 안으로 접히고, 넓으면(PC) 한 줄로 펼쳐짐 -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom mb-4">
         <div class="container">

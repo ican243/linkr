@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\DemoAccount;
 use App\Models\UserModel;
 
 class Auth extends BaseController
@@ -90,7 +91,35 @@ class Auth extends BaseController
     {
         session()->destroy();
 
+        // 체험 계정 안내 띠의 "내 계정 만들기"는 로그아웃 후 바로 회원가입 화면으로 보냄.
+        // (아무 주소로나 보낼 수 있게 하면 피싱에 악용되므로 정해진 값만 허용)
+        if ($this->request->getGet('to') === 'register') {
+            return redirect()->to('/auth/register');
+        }
+
         return redirect()->to('/');
+    }
+
+    // "체험 계정으로 둘러보기" 버튼 — 모두가 같이 쓰는 체험 계정으로 바로 로그인시켜 준다.
+    // POST + CSRF로만 받음: GET이면 다른 사이트가 링크/이미지 하나로 방문자의 로그인 상태를
+    // 몰래 체험 계정으로 바꿔치기할 수 있기 때문.
+    public function demoLogin()
+    {
+        $userId = DemoAccount::userId();
+
+        if ($userId === null) {
+            // 처음 한 번은 여기서 체험 계정과 샘플 데이터가 만들어짐
+            [$userId] = DemoAccount::reset();
+        }
+
+        $user = (new UserModel())->find($userId);
+
+        // 다른 계정으로 로그인돼 있었다면 그 로그인 정보는 지우고 새로 시작
+        session()->remove(['user_id', 'user_email', 'isLoggedIn', 'is_demo']);
+        $this->logInUser($user);
+        session()->set('is_demo', true);
+
+        return redirect()->to('/dashboard')->with('message', '체험 계정으로 로그인했어요. 모든 기능을 자유롭게 둘러보세요!');
     }
 
     // 구글 로그인 버튼 -> 구글 인증 화면으로 이동

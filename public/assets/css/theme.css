@@ -522,3 +522,22 @@ footer {
 .king-main {
     min-width: 0;
 }
+
+/* -------------------- 체험 계정 안내 띠 -------------------- */
+
+.king-demo-bar {
+    background: var(--king-primary);
+    color: #fff;
+    font-size: .9rem;
+}
+
+.king-demo-bar-link {
+    color: #fff;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.king-demo-bar-link:hover {
+    color: var(--king-primary-soft);
+}

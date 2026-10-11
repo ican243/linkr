@@ -18,6 +18,7 @@ $pageTitle = trim(strip_tags($this->renderSection('title'))) ?: (string) ($title
     <link href="<?= base_url('assets/css/theme.css') ?>" rel="stylesheet">
 </head>
 <body>
+    <?= $this->include('partials/demo_bar') ?>
     <!-- 휴대폰 화면에서만 보이는 상단 바: "메뉴" 버튼을 누르면 왼쪽에서 사이드바가 밀려 나옴 -->
     <header class="king-mobilebar d-flex d-md-none align-items-center justify-content-between px-3 py-2 sticky-top">
         <a href="/" class="fw-bold fs-5 text-decoration-none">Linkr</a>

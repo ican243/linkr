@@ -24,6 +24,14 @@
                 <p class="text-muted mt-3 mb-0">* 회원가입 없이 결과 예시만 먼저 확인할 수 있어요. 실제로 링크를 저장하려면 회원가입이 필요합니다.</p>
             <?php endif ?>
 
+            <?php if (! $isLoggedIn) : ?>
+                <!-- 포트폴리오 방문자용: 대시보드·통계까지 바로 볼 수 있는 체험 계정 입구 -->
+                <form action="/auth/demo" method="post" class="mt-3">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="btn btn-outline-primary">로그인 없이 체험 계정으로 둘러보기 →</button>
+                </form>
+            <?php endif ?>
+
             <?php if (! empty($preview)) : ?>
                 <div class="card p-3 mt-4 text-start" style="max-width:460px;">
                     <div class="d-flex align-items-center gap-3">

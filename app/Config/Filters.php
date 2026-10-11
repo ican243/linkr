@@ -37,6 +37,7 @@ class Filters extends BaseFilters
         'adminAuth'     => \App\Filters\AdminAuthFilter::class,
         'customDomain'  => \App\Filters\CustomDomainFilter::class,
         'planTransition' => \App\Filters\PlanTransitionFilter::class,
+        'demoGuard'     => \App\Filters\DemoGuardFilter::class,
     ];
 
     /**
@@ -117,5 +118,16 @@ class Filters extends BaseFilters
      *
      * @var array<string, array<string, list<string>>>
      */
-    public array $filters = [];
+    public array $filters = [
+        // 체험 계정에서 막을 기능들 (자세한 규칙은 app/Filters/DemoGuardFilter.php)
+        'demoGuard' => [
+            'before' => [
+                'account',
+                'custom-domain', 'custom-domain/*',
+                'api-keys', 'api-keys/*',
+                'pricing/*',
+                'payment/checkout', 'payment/success',
+            ],
+        ],
+    ];
 }

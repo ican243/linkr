@@ -8,8 +8,8 @@ use CodeIgniter\CLI\CLI;
 
 // 예약된 다운그레이드 중 시점이 지난 것들을 한 번에 적용한다.
 // 로그인 요청마다 자동으로 적용되긴 하지만(PlanTransitionFilter), 한동안 접속을 안 한
-// 회원은 그걸로 처리가 안 되므로, 이 커맨드를 크론에 등록해두면(예: 매일 자정) 그런 경우까지
-// 놓치지 않고 정리됨. 지금 서버엔 크론이 등록돼있지 않아서, 등록 전까지는 수동으로 실행해야 함.
+// 회원은 그걸로 처리가 안 되므로, 크론으로 매시간 실행해서 그런 경우까지 놓치지 않고 정리함
+// (/etc/cron.d/king 참고).
 //
 // 사용법: php spark plan:apply-downgrades
 class ApplyPlanDowngrades extends BaseCommand

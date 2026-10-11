@@ -17,6 +17,15 @@
         <div class="alert alert-danger"><?= esc(session()->getFlashdata('error')) ?></div>
     <?php endif ?>
 
+    <!-- 포트폴리오 방문자용: 회원가입 없이 모든 기능이 열린 체험 계정으로 바로 들어가기 -->
+    <form action="/auth/demo" method="post" class="mb-4">
+        <?= csrf_field() ?>
+        <button type="submit" class="btn btn-primary btn-lg w-100">회원가입 없이 체험 계정으로 둘러보기</button>
+        <div class="form-text text-center">샘플 링크와 통계가 채워진 엔터프라이즈 계정으로 바로 들어가요.</div>
+    </form>
+
+    <div class="text-center text-muted mb-3">또는 내 계정으로 로그인</div>
+
     <form action="/auth/login" method="post">
         <?= csrf_field() ?>
         <div class="mb-3">

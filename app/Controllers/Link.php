@@ -3,6 +3,7 @@
 //단축링크의 생성, 조회, 수정, 삭제, 리다이렉트를 전부 담당하는 컨트롤러 이 서버의 핵심 기능이 여기 다 들어있음.!!
 namespace App\Controllers;
 
+use App\Libraries\DemoAccount;
 use App\Models\ClickLogModel;
 use App\Models\LinkModel;
 use App\Models\SettingModel;
@@ -71,6 +72,22 @@ class Link extends BaseController
 
         if ($fallbackUrl !== '' && ! is_safe_url($fallbackUrl)) {
             return view('link/form', ['user' => $user, 'error' => '만료 후 이동할 주소도 http:// 또는 https://로 시작하는 올바른 URL이어야 합니다.']);
+        }
+
+        // 체험 계정은 누구나 쓰는 계정이라 하루(한국 시간 기준)에 만들 수 있는 링크 수를 제한함
+        if (DemoAccount::isDemoUser((int) $user['id'])) {
+            $todayStartUtc = (new \DateTime('today', new \DateTimeZone('Asia/Seoul')))
+                ->setTimezone(new \DateTimeZone('UTC'))
+                ->format('Y-m-d H:i:s');
+
+            $createdToday = $model->where('user_id', $user['id'])->where('created_at >=', $todayStartUtc)->countAllResults();
+
+            if ($createdToday >= DemoAccount::DAILY_LINK_LIMIT) {
+                return view('link/form', [
+                    'user'  => $user,
+                    'error' => '체험 계정은 하루에 ' . DemoAccount::DAILY_LINK_LIMIT . '개까지만 링크를 만들 수 있어요. 내 계정을 만들면 제한 없이 사용할 수 있어요.',
+                ]);
+            }
         }
 
         if ($user['plan'] === 'free') {
@@ -351,7 +368,7 @@ class Link extends BaseController
         $plan  = $owner['plan'] ?? 'free';
 
         if ($plan !== 'free' && ! empty($link['fallback_url'])) {
-            return redirect()->to($link['fallback_url']);
+            return $this->redirectOrNotice($link, $link['fallback_url']);
         }
 
         $body = view('link/expired', [
@@ -432,7 +449,19 @@ class Link extends BaseController
             'user_agent' => (string) $this->request->getUserAgent(),
         ]);
 
-        return redirect()->to($link['original_url']);
+        return $this->redirectOrNotice($link, $link['original_url']);
+    }
+
+    // 체험 계정이 만든 링크는 바로 이동시키지 않고 "어디로 이동하는지" 확인 화면을 먼저 보여줌.
+    // 체험 계정은 누구나 로그인해서 링크를 만들 수 있으니, 우리 도메인을 이용한 피싱 링크로 악용되는 걸 막기 위함.
+    // (확인 화면의 이동 버튼은 원래 주소로 직접 연결되는 일반 링크라, 주소에 뭘 붙여도 이 화면을 건너뛸 수 없음)
+    private function redirectOrNotice(array $link, string $url)
+    {
+        if (DemoAccount::isDemoUser((int) $link['user_id'])) {
+            return view('link/demo_notice', ['url' => $url]);
+        }
+
+        return redirect()->to($url);
     }
 
 }

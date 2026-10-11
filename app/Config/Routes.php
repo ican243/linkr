@@ -17,6 +17,8 @@ $routes->get('auth/register', 'Auth::registerForm');
 $routes->post('auth/register', 'Auth::register');
 $routes->get('auth/login', 'Auth::loginForm');
 $routes->post('auth/login', 'Auth::login');
+// 포트폴리오 방문자용 "체험 계정으로 둘러보기" 버튼 (회원가입 없이 바로 로그인)
+$routes->post('auth/demo', 'Auth::demoLogin');
 $routes->get('logout', 'Auth::logout');
 
 // 예전 주소(/register, /login)로 들어와도 새 주소로 자동 이동시켜줌 (북마크 등 대비)
