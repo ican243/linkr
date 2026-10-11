@@ -1,5 +1,7 @@
 <?= $this->extend('layout') ?>
 
+<?= $this->section('title') ?>개인정보처리방침<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 
 <div class="py-4">

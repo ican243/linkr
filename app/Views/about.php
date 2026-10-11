@@ -1,5 +1,8 @@
 <?= $this->extend('layout') ?>
 
+<?= $this->section('title') ?>서비스 소개<?= $this->endSection() ?>
+<?= $this->section('description') ?>Linkr가 어떤 서비스인지, URL 단축부터 QR 코드·클릭 통계·커스텀 도메인까지 주요 기능을 소개합니다.<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 
 <div class="text-center py-4">

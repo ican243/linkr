@@ -1,5 +1,7 @@
 <?= $this->extend($layout ?? 'layout') ?>
 
+<?= $this->section('title') ?>사용할 수 없는 링크<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="text-center py-5">
     <h1 class="mb-3">만료된 링크입니다</h1>

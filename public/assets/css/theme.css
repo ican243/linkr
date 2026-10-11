@@ -459,3 +459,66 @@ footer {
     background: transparent;
     border-top-color: var(--king-border) !important;
 }
+
+/* -------------------- 회원 화면 사이드바 (모바일 서랍 메뉴) -------------------- */
+
+.king-sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    --bs-offcanvas-width: 270px;
+}
+
+/* 부트스트랩 offcanvas-md는 PC 화면에서 배경을 투명으로 바꾸는데, 사이드바는 흰 배경을 유지해야 함 */
+.king-sidebar.offcanvas-md {
+    background-color: var(--king-surface) !important;
+}
+
+.king-mobilebar {
+    background: rgba(255, 255, 255, .92);
+    backdrop-filter: saturate(180%) blur(10px);
+    border-bottom: 1px solid var(--king-border);
+}
+
+/* -------------------- 복사 버튼 / 알림(토스트) -------------------- */
+
+.king-copy {
+    white-space: nowrap;
+}
+
+.king-copy.is-copied {
+    background: var(--king-primary);
+    border-color: var(--king-primary);
+    color: #fff;
+}
+
+.king-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 28px;
+    z-index: 2000;
+    transform: translate(-50%, 12px);
+    max-width: calc(100% - 32px);
+    padding: .7rem 1.1rem;
+    border-radius: 999px;
+    background: var(--king-ink);
+    color: #fff;
+    font-size: .9rem;
+    font-weight: 600;
+    box-shadow: var(--king-shadow);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.king-toast.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+/* 본문이 표 너비만큼 옆으로 늘어나지 않게 — 넓은 표는 표 안에서만 가로 스크롤됨(table-responsive) */
+.king-main {
+    min-width: 0;
+}

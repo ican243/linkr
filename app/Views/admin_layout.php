@@ -14,7 +14,9 @@ $navItems        = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= esc($title ?? '관리자 - Linkr') ?></title>
+    <?php helper('seo'); ?>
+    <?php // 관리자 화면은 검색엔진에 절대 노출되면 안 되므로 noindex ?>
+    <?= page_meta(isset($title) ? (string) $title : '관리자', '', true) ?>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.css" rel="stylesheet">

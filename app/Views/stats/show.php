@@ -1,5 +1,7 @@
 <?= $this->extend('user_layout') ?>
 
+<?= $this->section('title') ?>링크 통계<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <h1 class="mb-1">클릭 통계</h1>
 <p class="text-muted">

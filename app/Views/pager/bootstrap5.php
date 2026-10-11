@@ -7,11 +7,11 @@ use CodeIgniter\Pager\PagerRenderer;
  */
 $pager->setSurroundCount(2);
 ?>
-<nav aria-label="<?= lang('Pager.pageNavigation') ?>">
+<nav aria-label="페이지 이동">
     <ul class="pagination">
         <?php if ($pager->hasPrevious()) : ?>
             <li class="page-item">
-                <a class="page-link" href="<?= $pager->getPrevious() ?>"><?= lang('Pager.previous') ?></a>
+                <a class="page-link" href="<?= $pager->getPrevious() ?>">‹ 이전</a>
             </li>
         <?php endif ?>
 
@@ -23,7 +23,7 @@ $pager->setSurroundCount(2);
 
         <?php if ($pager->hasNext()) : ?>
             <li class="page-item">
-                <a class="page-link" href="<?= $pager->getNext() ?>"><?= lang('Pager.next') ?></a>
+                <a class="page-link" href="<?= $pager->getNext() ?>">다음 ›</a>
             </li>
         <?php endif ?>
     </ul>

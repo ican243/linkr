@@ -1,5 +1,7 @@
 <?= $this->extend('user_layout') ?>
 
+<?= $this->section('title') ?>API 키<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <h1 class="mb-4">API 키</h1>
 

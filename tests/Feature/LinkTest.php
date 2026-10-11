@@ -38,6 +38,11 @@ final class LinkTest extends CIUnitTestCase
 
         $result->assertOK();
         $result->assertSee('https://example.com/original-page');
+        // 복사 버튼, 검색엔진 비노출(noindex), 화면별 제목
+        $body = html_entity_decode($result->getBody());
+        $this->assertStringContainsString('data-copy=', $body);
+        $this->assertStringContainsString('noindex', $body);
+        $this->assertStringContainsString('<title>대시보드 | Linkr</title>', $body);
     }
 
     // javascript:, file: 같은 위험한 주소는 단축할 수 없어야 하고, 한글 주소는 정상적으로 만들어져야 한다.

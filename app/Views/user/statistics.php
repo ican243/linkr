@@ -1,5 +1,7 @@
 <?= $this->extend('user_layout') ?>
 
+<?= $this->section('title') ?>통계<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <h1 class="mb-4">통계</h1>
 

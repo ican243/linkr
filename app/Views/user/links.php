@@ -1,5 +1,7 @@
 <?= $this->extend('user_layout') ?>
 
+<?= $this->section('title') ?>링크 관리<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <?php if (session()->getFlashdata('message')) : ?>
     <div class="alert alert-success"><?= esc(session()->getFlashdata('message')) ?></div>
@@ -64,7 +66,12 @@
                     <tr>
                         <td><img src="<?= esc(base_url('qr/' . $link['short_code'])) ?>" alt="QR" width="60" height="60"></td>
                         <td><?= ! empty($link['title']) ? esc($link['title']) : '<span class="text-muted">—</span>' ?></td>
-                        <td><a href="<?= esc(short_url($link)) ?>" target="_blank" rel="noopener noreferrer"><?= esc(short_url($link)) ?></a></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="<?= esc(short_url($link)) ?>" target="_blank" rel="noopener noreferrer"><?= esc(short_url($link)) ?></a>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 king-copy" data-copy="<?= esc(short_url($link), 'attr') ?>">복사</button>
+                            </div>
+                        </td>
                         <td class="text-truncate" style="max-width:220px;"><?= esc($link['original_url']) ?></td>
                         <td>
                             <?php if ($isDead) : ?>

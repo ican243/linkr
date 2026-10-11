@@ -1,5 +1,7 @@
 <?= $this->extend('user_layout') ?>
 
+<?= $this->section('title') ?>결제 완료<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="mx-auto text-center" style="max-width:400px;">
     <h1 class="mb-3">✅ 결제 완료</h1>

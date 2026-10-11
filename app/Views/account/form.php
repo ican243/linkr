@@ -1,5 +1,7 @@
 <?= $this->extend('user_layout') ?>
 
+<?= $this->section('title') ?>계정 설정<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="mx-auto" style="max-width:450px;">
     <h1 class="mb-4">계정 설정</h1>

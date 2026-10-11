@@ -1,25 +1,8 @@
-<!doctype html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="robots" content="noindex">
+<?php
+// 운영(production) 환경에서 예상치 못한 오류(500)가 났을 때 보여주는 화면.
+// 오류의 자세한 내용은 방문자에게 보여주지 않고 writable/logs 로그 파일에만 남음.
+$errorCode    = '500';
+$errorHeading = '잠시 문제가 생겼어요';
+$errorMessage = '일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요.';
 
-    <title><?= lang('Errors.whoops') ?></title>
-
-    <style>
-        <?= preg_replace('#[\r\n\t ]+#', ' ', file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'debug.css')) ?>
-    </style>
-</head>
-<body>
-
-    <div class="container text-center">
-
-        <h1 class="headline"><?= lang('Errors.whoops') ?></h1>
-
-        <p class="lead"><?= lang('Errors.weHitASnag') ?></p>
-
-    </div>
-
-</body>
-
-</html>
+include __DIR__ . '/brand_error.php';

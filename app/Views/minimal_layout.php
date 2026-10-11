@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= esc($title ?? '') ?></title>
+    <?php $pageTitle = trim(strip_tags($this->renderSection('title'))) ?: (string) ($title ?? ''); ?>
+    <title><?= esc($pageTitle) ?></title>
+    <?php // 화이트라벨 화면이라 Linkr 파비콘도 보이지 않게 빈 아이콘으로 대체 ?>
+    <link rel="icon" href="data:,">
     <!--
         화이트라벨링(엔터프라이즈 전용) 레이아웃.
         king 로고/네비게이션/푸터/광고 문구를 전부 뺀 빈 껍데기.

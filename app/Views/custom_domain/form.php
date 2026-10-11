@@ -1,5 +1,7 @@
 <?= $this->extend('user_layout') ?>
 
+<?= $this->section('title') ?>커스텀 도메인<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="mx-auto" style="max-width:500px;">
     <h1 class="mb-4">커스텀 도메인 설정</h1>

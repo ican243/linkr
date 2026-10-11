@@ -25,6 +25,9 @@ $planState = static function (string $plan) use ($currentPlan, $planOrder): stri
 ?>
 <?= $this->extend('layout') ?>
 
+<?= $this->section('title') ?>요금제<?= $this->endSection() ?>
+<?= $this->section('description') ?>무료·프로·엔터프라이즈 요금제의 가격과 기능을 비교해보세요. 무료로 바로 시작할 수 있습니다.<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 
 <div class="text-center py-4">

@@ -1,5 +1,7 @@
 <?= $this->extend('layout') ?>
 
+<?= $this->section('title') ?>로그인<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="mx-auto" style="max-width:400px;">
     <h1 class="mb-4">로그인</h1>

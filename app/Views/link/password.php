@@ -1,5 +1,7 @@
 <?= $this->extend($layout ?? 'layout') ?>
 
+<?= $this->section('title') ?>비밀번호로 보호된 링크<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 
 <div class="container py-5">

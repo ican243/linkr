@@ -1,2 +1,14 @@
+# 검색엔진 수집 규칙
+# 홈·서비스소개·요금제 같은 공개 페이지만 수집하고, 로그인해야 보이는 화면과 관리자 화면은 제외
 User-agent: *
-Disallow: 
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /links
+Disallow: /shorten
+Disallow: /stats
+Disallow: /qr
+Disallow: /api-keys
+Disallow: /api/
+Disallow: /account
+Disallow: /custom-domain
+Disallow: /payment

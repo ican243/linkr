@@ -1,5 +1,7 @@
 <?= $this->extend('user_layout') ?>
 
+<?= $this->section('title') ?>새 링크 만들기<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="mx-auto" style="max-width:500px;">
     <h1 class="mb-4">URL 단축</h1>
@@ -10,9 +12,16 @@
 
     <?php if (! empty($shortUrl)) : ?>
         <div class="alert alert-success">
-            단축 완료: <a href="<?= esc($shortUrl) ?>"><?= esc($shortUrl) ?></a>
+            <div class="fw-bold mb-2">단축 완료! 아래 주소를 복사해서 사용하세요.</div>
+            <div class="input-group">
+                <input type="text" class="form-control bg-white" value="<?= esc($shortUrl, 'attr') ?>" readonly aria-label="단축된 주소">
+                <button type="button" class="btn btn-primary king-copy" data-copy="<?= esc($shortUrl, 'attr') ?>">복사</button>
+            </div>
         </div>
-        <p><img src="<?= esc(base_url('qr/' . $shortCode)) ?>" alt="QR 코드" width="150" height="150"></p>
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <img src="<?= esc(base_url('qr/' . $shortCode)) ?>" alt="<?= esc($shortUrl, 'attr') ?> QR 코드" width="120" height="120">
+            <a href="<?= esc(base_url('qr/' . $shortCode)) ?>" download="Linkr-qr-<?= esc($shortCode, 'attr') ?>.png" class="btn btn-sm btn-outline-secondary">QR 다운로드</a>
+        </div>
     <?php endif ?>
 
     <form action="/shorten" method="post">

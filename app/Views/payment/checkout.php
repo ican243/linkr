@@ -1,4 +1,6 @@
   <?= $this->extend('user_layout') ?>
+
+<?= $this->section('title') ?>결제하기<?= $this->endSection() ?>
   
   <?= $this->section('content') ?>
   <div class="mx-auto" style="max-width:400px;">

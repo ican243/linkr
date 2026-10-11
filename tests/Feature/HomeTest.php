@@ -58,4 +58,16 @@ final class HomeTest extends CIUnitTestCase
         $result->assertDontSee('24/7');
         $result->assertDontSee('준비 중');
     }
+
+    // 페이지마다 제목이 다르고, 공유 미리보기(OG)·파비콘 태그가 들어가는지.
+    public function testPagesHaveTitleAndShareTags(): void
+    {
+        $home = html_entity_decode($this->get('/')->getBody());
+        $this->assertStringContainsString('<title>Linkr – 긴 URL은 짧게, 클릭 통계는 한눈에</title>', $home);
+        $this->assertStringContainsString('og-image.png', $home);
+        $this->assertStringContainsString('favicon.svg', $home);
+
+        $this->assertStringContainsString('<title>요금제 | Linkr</title>', html_entity_decode($this->get('/pricing')->getBody()));
+        $this->assertStringContainsString('<title>서비스 소개 | Linkr</title>', html_entity_decode($this->get('/about')->getBody()));
+    }
 }

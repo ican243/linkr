@@ -1,5 +1,7 @@
 <?= $this->extend('user_layout') ?>
 
+<?= $this->section('title') ?>결제 내역<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <h1 class="mb-4">결제 내역</h1>
 

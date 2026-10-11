@@ -1,5 +1,7 @@
 <?= $this->extend('user_layout') ?>
 
+<?= $this->section('title') ?>QR 코드<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">QR 코드</h1>
@@ -32,6 +34,7 @@
                         <?= esc(short_url($link)) ?>
                     </div>
                     <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-sm btn-outline-primary king-copy" data-copy="<?= esc(short_url($link), 'attr') ?>">주소 복사</button>
                         <a href="<?= esc(base_url('qr/' . $link['short_code'])) ?>" download="Linkr-qr-<?= esc($link['short_code']) ?>.png"
                            class="btn btn-sm btn-outline-primary">다운로드</a>
                         <a href="/links/<?= esc($link['short_code']) ?>/stats" class="btn btn-sm btn-outline-secondary">통계</a>
