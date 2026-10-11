@@ -84,3 +84,39 @@ if (! function_exists('utc_to_kst_local')) {
         return $dt->format($format);
     }
 }
+if (! function_exists('is_safe_url')) {
+    /**
+     * 단축할 원본 주소(와 만료 후 이동 주소)로 써도 되는 URL인지 검사.
+     * - http/https만 허용: filter_var(FILTER_VALIDATE_URL)만 쓰면 javascript://, file://,
+     *   vbscript:// 같은 위험한 주소도 "올바른 URL"로 통과돼 버려서 scheme을 따로 확인함.
+     * - 한글 도메인/경로(예: https://ko.wikipedia.org/wiki/서울)는 filter_var가 거부하므로,
+     *   검사할 때만 도메인은 퓨니코드로, 나머지 한글은 퍼센트 인코딩으로 바꿔서 확인함
+     *   (저장되는 값은 사용자가 입력한 원래 주소 그대로).
+     */
+    function is_safe_url(?string $url): bool
+    {
+        $url = trim((string) $url);
+
+        if ($url === '' || strlen($url) > 2048) {
+            return false;
+        }
+
+        $parts = parse_url($url);
+
+        if ($parts === false || empty($parts['host']) || ! in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true)) {
+            return false;
+        }
+
+        $asciiHost = idn_to_ascii($parts['host'], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
+
+        if ($asciiHost === false) {
+            return false;
+        }
+
+        $hostPos = strpos($url, $parts['host']);
+        $ascii   = substr_replace($url, $asciiHost, $hostPos, strlen($parts['host']));
+        $ascii   = preg_replace_callback('/[^\x21-\x7E]+/', static fn ($m) => rawurlencode($m[0]), $ascii);
+
+        return filter_var($ascii, FILTER_VALIDATE_URL) !== false;
+    }
+}

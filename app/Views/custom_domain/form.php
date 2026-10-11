@@ -24,7 +24,7 @@
         <?php if ($user['custom_domain_verified']) : ?>
             <p class="text-muted small">
                 현재는 <code>http://<?= esc($user['custom_domain']) ?></code> 로만 접속됩니다(https는 아직 지원 전).
-                A 레코드가 <code>1.234.79.116</code>으로 설정되어 있어야 실제로 접속이 됩니다.
+                A 레코드가 <code><?= esc($serverIp) ?></code>으로 설정되어 있어야 실제로 접속이 됩니다.
             </p>
             <?php if (! empty($exampleLink)) : ?>
                 <?php $exampleUrl = 'http://' . rtrim($user['custom_domain'], '/') . '/' . $exampleLink['short_code']; ?>
@@ -45,7 +45,7 @@
                 "TXT 레코드 확인" 버튼을 눌러주세요.
                 <ul class="mb-0">
                     <li>TXT 레코드에 <code>linkr-verify=<?= esc($user['custom_domain_verify_code'] ?? '') ?></code> 추가 (소유권 확인용)</li>
-                    <li>A 레코드를 <code>1.234.79.116</code>으로 설정 (실제 접속을 위한 라우팅용)</li>
+                    <li>A 레코드를 <code><?= esc($serverIp) ?></code>으로 설정 (실제 접속을 위한 라우팅용)</li>
                 </ul>
             </div>
             <form action="/custom-domain/verify" method="post" class="mb-2">

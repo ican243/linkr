@@ -19,8 +19,10 @@ class Home extends BaseController
     {
         $url = $this->request->getPost('original_url');
 
-        if (! filter_var($url, FILTER_VALIDATE_URL)) {
-            return view('home', ['previewError' => '올바른 URL 형식이 아닙니다. (예: https://example.com)']);
+        helper('link');
+
+        if (! is_safe_url($url)) {
+            return view('home', ['previewError' => 'http:// 또는 https://로 시작하는 올바른 URL을 입력해주세요. (예: https://example.com)']);
         }
 
         $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

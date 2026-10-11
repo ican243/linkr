@@ -26,7 +26,12 @@ class CustomDomain extends BaseController
                 ->first();
         }
 
-        return view('custom_domain/form', ['user' => $user, 'exampleLink' => $exampleLink]);
+        return view('custom_domain/form', [
+            'user'        => $user,
+            'exampleLink' => $exampleLink,
+            // 회원이 A 레코드에 입력할 서버 IP — 서버를 옮겨도 코드 수정 없이 .env만 바꾸면 되게
+            'serverIp'    => (string) env('customDomain.serverIp', '(서버 IP 미설정)'),
+        ]);
     }
 
     public function save()

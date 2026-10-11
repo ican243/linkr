@@ -17,12 +17,25 @@ class Auth extends BaseController
         $email    = $this->request->getPost('email');
         $password = $this->request->getPost('password');
 
+        // 관리자 계정은 무차별 대입의 1순위 대상이라, 같은 IP / 같은 이메일 각각 5분에 5번까지만 시도 허용.
+        // (IP만 보면 여러 IP로 한 계정을 노리는 공격을, 이메일만 보면 한 IP에서 여러 계정을 찍어보는 공격을 못 막음)
+        $throttler = service('throttler');
+        $ipKey     = 'admin_login_ip_' . md5($this->request->getIPAddress());
+        $emailKey  = 'admin_login_email_' . md5((string) $email);
+
+        if ($throttler->check($ipKey, 5, 300) === false || $throttler->check($emailKey, 5, 300) === false) {
+            return view('admin/login', ['error' => '로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.']);
+        }
+
         $model = new AdminModel();
         $admin = $model->where('email', $email)->first();
 
         if (! $admin || ! password_verify($password, $admin['password'])) {
             return view('admin/login', ['error' => '이메일 또는 비밀번호가 올바르지 않습니다.']);
         }
+
+        // 로그인 직전에 세션 ID를 새로 발급 (세션 고정 방지). 회원 로그인 상태 등 기존 세션 값은 그대로 유지됨.
+        session()->regenerate(true);
 
         session()->set([
             'admin_id'        => $admin['id'],

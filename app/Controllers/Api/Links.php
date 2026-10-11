@@ -32,8 +32,10 @@ class Links extends BaseController
         $title       = trim((string) $this->request->getPost('title'));
         $customAlias = trim((string) $this->request->getPost('custom_alias'));
 
-        if (! filter_var($url, FILTER_VALIDATE_URL)) {
-            return $this->response->setStatusCode(400)->setJSON(['error' => '올바른 URL 형식이 아닙니다. (예: https://example.com)']);
+        helper('link');
+
+        if (! is_safe_url($url)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'http:// 또는 https://로 시작하는 올바른 URL을 입력해주세요. (예: https://example.com)']);
         }
 
         $model = new LinkModel();

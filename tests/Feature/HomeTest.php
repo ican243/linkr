@@ -36,7 +36,7 @@ final class HomeTest extends CIUnitTestCase
         ]);
 
         $result->assertOK();
-        $result->assertSee('올바른 URL 형식이 아닙니다');
+        $result->assertSee('올바른 URL을 입력해주세요');
     }
 
     public function testAboutPageIsReachable(): void

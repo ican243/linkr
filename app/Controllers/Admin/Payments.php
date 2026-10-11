@@ -178,12 +178,23 @@ class Payments extends BaseController
         return redirect()->to('/admin/payments')->with('message', '환불 처리가 완료되었습니다.');
     }
 
+    // "테스트 완료 처리"는 개발/테스트 환경에서만 쓰는 기능 — 운영 사이트 관리자 화면엔 노출하지 않음
+    public static function testCompleteEnabled(): bool
+    {
+        return in_array(ENVIRONMENT, ['development', 'testing'], true);
+    }
+
     // 토스가 테스트 키(test_ck_/test_sk_)로 되어있어서 실제 카드 결제 테스트가 어려운 동안,
     // 대기중인 결제 건을 "실제로 결제된 것처럼" 처리해주는 임시 기능. updateStatus()와 달리
     // 이건 회원 plan/plan_expires_at까지 실제 결제 승인(success())과 동일하게 갱신해준다.
     // method를 'admin_test'로 남겨서 나중에 실결제 이력과 절대 헷갈리지 않게 구분함.
+    // 운영(production)에서는 화면 버튼을 숨기는 것과 별개로, 주소로 직접 요청해도 처리되지 않게 막음.
     public function markTestCompleted(int $id)
     {
+        if (! self::testCompleteEnabled()) {
+            throw PageNotFoundException::forPageNotFound();
+        }
+
         $adminId = (int) session()->get('admin_id');
 
         $model   = new PaymentModel();

@@ -65,8 +65,12 @@ class Link extends BaseController
 
         helper('link');
 
-        if (! filter_var($url, FILTER_VALIDATE_URL)) {
-            return view('link/form', ['user' => $user, 'error' => '올바른 URL 형식이 아닙니다. (예: https://example.com)']);
+        if (! is_safe_url($url)) {
+            return view('link/form', ['user' => $user, 'error' => 'http:// 또는 https://로 시작하는 올바른 URL을 입력해주세요. (예: https://example.com)']);
+        }
+
+        if ($fallbackUrl !== '' && ! is_safe_url($fallbackUrl)) {
+            return view('link/form', ['user' => $user, 'error' => '만료 후 이동할 주소도 http:// 또는 https://로 시작하는 올바른 URL이어야 합니다.']);
         }
 
         if ($user['plan'] === 'free') {
@@ -217,8 +221,12 @@ class Link extends BaseController
 
         helper('link');
 
-        if (! filter_var($url, FILTER_VALIDATE_URL)) {
-            return view('link/edit', ['link' => $link, 'user' => $user, 'error' => '올바른 URL 형식이 아닙니다. (예: https://example.com)']);
+        if (! is_safe_url($url)) {
+            return view('link/edit', ['link' => $link, 'user' => $user, 'error' => 'http:// 또는 https://로 시작하는 올바른 URL을 입력해주세요. (예: https://example.com)']);
+        }
+
+        if ($fallbackUrl !== '' && ! is_safe_url($fallbackUrl)) {
+            return view('link/edit', ['link' => $link, 'user' => $user, 'error' => '만료 후 이동할 주소도 http:// 또는 https://로 시작하는 올바른 URL이어야 합니다.']);
         }
 
         // 비밀번호를 새로 거는 것만 무료 회원한테 막는다(제거는 요금제 상관없이 항상 허용).

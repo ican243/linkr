@@ -164,27 +164,11 @@ class Auth extends BaseController
             return redirect()->to('/auth/login')->with('error', '구글 계정에서 이메일 정보를 가져오지 못했습니다.');
         }
 
-        $model = new UserModel();
+        // 구글은 userinfo에 email_verified(true/false)를 같이 내려줌
+        $user = $this->findOrCreateSocialUser('google_id', (string) $googleUser['sub'], $googleUser['email'], $googleUser['name'] ?? null, ! empty($googleUser['email_verified']));
 
-        $user = $model->where('google_id', $googleUser['sub'])->first();
-
-        if (! $user) {
-            // 이미 이메일/비밀번호로 가입된 계정이면 구글 계정만 연결, 없으면 새로 생성
-            $user = $model->where('email', $googleUser['email'])->first();
-
-            if ($user) {
-                $model->update($user['id'], ['google_id' => $googleUser['sub']]);
-            } else {
-                $newId = $model->insert([
-                    'email'     => $googleUser['email'],
-                    // 구글로만 로그인할 계정이라 실제로 쓰이지 않는 임의 비밀번호를 해시로 저장
-                    // (password 컬럼이 NOT NULL이라 값은 필요하지만, 본인은 이 값을 알 필요가 없음)
-                    'password'  => password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT),
-                    'name'      => $googleUser['name'] ?? null,
-                    'google_id' => $googleUser['sub'],
-                ]);
-                $user = $model->find($newId);
-            }
+        if (is_string($user)) {
+            return redirect()->to('/auth/login')->with('error', $user);
         }
 
         $this->logInUser($user);
@@ -262,24 +246,11 @@ class Auth extends BaseController
             return redirect()->to('/auth/login')->with('error', '네이버 계정에서 이메일 정보를 가져오지 못했습니다.');
         }
 
-        $model = new UserModel();
+        // 네이버는 인증 여부 플래그를 따로 주지 않지만, 네이버 계정 이메일은 가입 시 네이버가 확인한 값이라 인증된 것으로 봄
+        $user = $this->findOrCreateSocialUser('naver_id', (string) $naverUser['id'], $naverUser['email'], $naverUser['name'] ?? null, true);
 
-        $user = $model->where('naver_id', $naverUser['id'])->first();
-
-        if (! $user) {
-            $user = $model->where('email', $naverUser['email'])->first();
-
-            if ($user) {
-                $model->update($user['id'], ['naver_id' => $naverUser['id']]);
-            } else {
-                $newId = $model->insert([
-                    'email'    => $naverUser['email'],
-                    'password' => password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT),
-                    'name'     => $naverUser['name'] ?? null,
-                    'naver_id' => $naverUser['id'],
-                ]);
-                $user = $model->find($newId);
-            }
+        if (is_string($user)) {
+            return redirect()->to('/auth/login')->with('error', $user);
         }
 
         $this->logInUser($user);
@@ -312,12 +283,6 @@ class Auth extends BaseController
         $state = $this->request->getGet('state');
 
         if ($state === null || $state !== session()->get('kakao_oauth_state')) {
-            // 진단용 로그(임시): state 불일치가 "세션이 아예 안 이어진 것"인지
-            // "다른 값이 들어있는 것"인지 구분하기 위해 실제 값들을 남긴다.
-            log_message('error', '카카오 state 불일치. 세션ID=' . session_id()
-                . ', 콜백으로 받은 state=' . ($state ?? 'null')
-                . ', 세션에 저장된 state=' . (session()->get('kakao_oauth_state') ?? 'null (세션이 비어있음)'));
-
             return redirect()->to('/auth/login')->with('error', '로그인 요청이 올바르지 않습니다. 다시 시도해주세요.');
         }
         session()->remove('kakao_oauth_state');
@@ -391,33 +356,20 @@ class Auth extends BaseController
         $nickname     = $kakaoAccount['profile']['nickname'] ?? null;
 
         if (empty($kakaoId) || empty($email)) {
-            // 진짜 원인 진단용 로그. kakao_account 안의 email_needs_agreement(동의 안 함),
-            // is_email_valid/is_email_verified 같은 세부 플래그를 남겨서, 다음 시도 때
-            // "동의를 안 눌렀는지" vs "애초에 항목이 안 떴는지"를 로그만 보고 구분할 수 있게 함.
-            log_message('error', '카카오 이메일 획득 실패. kakao_id=' . ($kakaoId ?? 'null')
-                . ', kakao_account 원본=' . json_encode($kakaoAccount, JSON_UNESCAPED_UNICODE));
+            // 원인 구분용으로 "동의 필요 여부"만 남김 (이메일 등 개인정보는 로그에 남기지 않음)
+            log_message('error', '카카오 이메일 획득 실패. email_needs_agreement='
+                . var_export($kakaoAccount['email_needs_agreement'] ?? null, true));
 
             return redirect()->to('/auth/login')->with('error', '카카오 계정에서 이메일 정보를 가져오지 못했습니다. (앱 미심사 상태에서는 개발자 본인 계정만 이메일을 받을 수 있습니다)');
         }
 
-        $model = new UserModel();
+        // 카카오는 이메일이 "유효한지(is_email_valid)"와 "인증됐는지(is_email_verified)"를 따로 알려줌 — 둘 다 true여야 믿음
+        $emailVerified = ! empty($kakaoAccount['is_email_valid']) && ! empty($kakaoAccount['is_email_verified']);
 
-        $user = $model->where('kakao_id', $kakaoId)->first();
+        $user = $this->findOrCreateSocialUser('kakao_id', (string) $kakaoId, $email, $nickname, $emailVerified);
 
-        if (! $user) {
-            $user = $model->where('email', $email)->first();
-
-            if ($user) {
-                $model->update($user['id'], ['kakao_id' => $kakaoId]);
-            } else {
-                $newId = $model->insert([
-                    'email'    => $email,
-                    'password' => password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT),
-                    'name'     => $nickname,
-                    'kakao_id' => $kakaoId,
-                ]);
-                $user = $model->find($newId);
-            }
+        if (is_string($user)) {
+            return redirect()->to('/auth/login')->with('error', $user);
         }
 
         $this->logInUser($user);
@@ -425,8 +377,56 @@ class Auth extends BaseController
         return redirect()->to('/dashboard');
     }
 
+    // 소셜 로그인 공통: 소셜 ID로 회원을 찾고, 없으면 같은 이메일 계정에 연결하거나 새로 만든다.
+    // 같은 이메일 계정에 자동 연결하는 건 "소셜 쪽에서 인증된 이메일"이고 "기존 계정도 소셜 로그인으로
+    // 만들어진 계정"일 때만 허용함. 그렇지 않으면 공격자가 피해자 이메일로 먼저 비밀번호 가입을 해두고,
+    // 나중에 피해자가 소셜 로그인할 때 그 계정을 그대로 넘겨받는 계정 탈취가 가능해짐.
+    // 반환값: 로그인시킬 회원 배열, 또는 로그인 화면에 보여줄 오류 메시지(string)
+    private function findOrCreateSocialUser(string $idColumn, string $socialId, string $email, ?string $name, bool $emailVerified): array|string
+    {
+        $model = new UserModel();
+
+        $user = $model->where($idColumn, $socialId)->first();
+
+        if ($user) {
+            return $user;
+        }
+
+        if (! $emailVerified) {
+            return '인증되지 않은 이메일이라 로그인할 수 없습니다. 소셜 계정에서 이메일 인증을 마친 뒤 다시 시도해주세요.';
+        }
+
+        $user = $model->where('email', $email)->first();
+
+        if ($user) {
+            $isSocialAccount = ! empty($user['google_id']) || ! empty($user['naver_id']) || ! empty($user['kakao_id']);
+
+            if (! $isSocialAccount) {
+                return '이미 이메일·비밀번호로 가입된 계정입니다. 이메일과 비밀번호로 로그인해주세요.';
+            }
+
+            $model->update($user['id'], [$idColumn => $socialId]);
+
+            return $model->find($user['id']);
+        }
+
+        $newId = $model->insert([
+            'email'    => $email,
+            // 소셜로만 로그인할 계정이라 실제로 쓰이지 않는 임의 비밀번호를 해시로 저장
+            // (password 컬럼이 NOT NULL이라 값은 필요하지만, 본인은 이 값을 알 필요가 없음)
+            'password' => password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT),
+            'name'     => $name,
+            $idColumn  => $socialId,
+        ]);
+
+        return $model->find($newId);
+    }
+
     private function logInUser(array $user): void
     {
+        // 로그인 직전에 세션 ID를 새로 발급 — 남이 미리 심어둔 세션 ID가 그대로 로그인 상태가 되는 것(세션 고정) 방지
+        session()->regenerate(true);
+
         session()->set([
             'user_id'    => $user['id'],
             'user_email' => $user['email'],
