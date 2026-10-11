@@ -94,14 +94,13 @@ class Stats extends BaseController
             ->orderBy('clicked_at', 'DESC')
             ->findAll();
 
-        $csv = "클릭일시,IP주소,User-Agent\n";
+        $csv = "클릭일시,IP주소(일부 가림),User-Agent\n";
         foreach ($logs as $log) {
-            $csv .= sprintf(
-                "%s,%s,\"%s\"\n",
+            $csv .= implode(',', array_map([self::class, 'csvCell'], [
                 $log['clicked_at'],
                 $log['ip_address'] ?? '',
-                str_replace('"', '""', (string) $log['user_agent']),
-            );
+                (string) $log['user_agent'],
+            ])) . "\n";
         }
 
         // 앞에 UTF-8 BOM(\xEF\xBB\xBF)을 붙여야 엑셀에서 열었을 때 한글이 안 깨짐.
@@ -109,5 +108,17 @@ class Stats extends BaseController
             ->setHeader('Content-Type', 'text/csv; charset=UTF-8')
             ->setHeader('Content-Disposition', 'attachment; filename="Linkr_' . $code . '_clicks.csv"')
             ->setBody("\xEF\xBB\xBF" . $csv);
+    }
+
+    // CSV 칸 하나를 안전하게 만든다.
+    // User-Agent는 방문자가 마음대로 보낼 수 있는 값이라 "=HYPERLINK(...)"처럼 =, +, -, @ 등으로 시작하면
+    // 엑셀이 수식으로 실행해 버림(CSV 수식 주입). 앞에 ' 를 붙여 그냥 글자로 보이게 하고, 모든 칸을 "로 감쌈.
+    private static function csvCell(string $value): string
+    {
+        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+            $value = "'" . $value;
+        }
+
+        return '"' . str_replace('"', '""', $value) . '"';
     }
 }

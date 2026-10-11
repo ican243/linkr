@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Libraries\DemoAccount;
+use App\Libraries\RateLimit;
 use App\Models\UserModel;
 
 class Auth extends BaseController
@@ -14,6 +15,18 @@ class Auth extends BaseController
 
     public function register()
     {
+        // 자동 프로그램(봇) 대량 가입 방지 ①: 화면에서는 안 보이는 칸(website)에 값이 들어 있으면 봇으로 판단.
+        // 사람은 이 칸을 볼 수 없어 비워두지만, 봇은 보이는 칸을 전부 채우는 경우가 많음.
+        // 봇에게 막혔다는 힌트를 주지 않으려고 성공한 것처럼 보이게 하고 실제로는 아무것도 만들지 않음.
+        if ((string) $this->request->getPost('website') !== '') {
+            return redirect()->to('/auth/login')->with('message', '회원가입이 완료되었습니다. 로그인해주세요.');
+        }
+
+        // 자동 프로그램(봇) 대량 가입 방지 ②: 같은 IP에서 1시간에 10번까지만 가입 시도 가능
+        if (! RateLimit::allow('register_ip', $this->request->getIPAddress(), 10, 3600)) {
+            return view('auth/register', ['errors' => ['가입 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.']]);
+        }
+
         $rules = [
             'email'            => 'required|valid_email|is_unique[users.email]',
             'password'         => 'required|min_length[8]',
@@ -71,7 +84,9 @@ class Auth extends BaseController
         $throttler = service('throttler');
 
         // 캐시 키에는 @, /, \, :, (), {} 같은 특수문자를 쓸 수 없어서, 이메일을 그대로 쓰지 않고 해시로 변환.
-        if ($throttler->check('login_' . md5((string) $email), 5, 300) === false) {
+        // 여러 이메일을 바꿔가며 찍어보는 경우를 막으려고 IP 기준(5분에 20번)도 같이 확인.
+        if ($throttler->check('login_' . md5((string) $email), 5, 300) === false
+            || ! RateLimit::allow('login_ip', $this->request->getIPAddress(), 20, 300)) {
             return view('auth/login', ['error' => '로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.']);
         }
 
@@ -87,13 +102,15 @@ class Auth extends BaseController
         return redirect()->to('/dashboard');
     }
 
+    // 로그아웃은 POST + CSRF로만 받음: GET이면 다른 사이트가 <img src="/logout"> 하나로
+    // 방문자를 몰래 로그아웃시킬 수 있기 때문.
     public function logout()
     {
         session()->destroy();
 
         // 체험 계정 안내 띠의 "내 계정 만들기"는 로그아웃 후 바로 회원가입 화면으로 보냄.
         // (아무 주소로나 보낼 수 있게 하면 피싱에 악용되므로 정해진 값만 허용)
-        if ($this->request->getGet('to') === 'register') {
+        if ($this->request->getPost('to') === 'register') {
             return redirect()->to('/auth/register');
         }
 

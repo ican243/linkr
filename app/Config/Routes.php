@@ -19,7 +19,8 @@ $routes->get('auth/login', 'Auth::loginForm');
 $routes->post('auth/login', 'Auth::login');
 // 포트폴리오 방문자용 "체험 계정으로 둘러보기" 버튼 (회원가입 없이 바로 로그인)
 $routes->post('auth/demo', 'Auth::demoLogin');
-$routes->get('logout', 'Auth::logout');
+// 로그아웃은 POST만 (다른 사이트가 링크/이미지로 강제 로그아웃시키는 것 방지)
+$routes->post('logout', 'Auth::logout');
 
 // 예전 주소(/register, /login)로 들어와도 새 주소로 자동 이동시켜줌 (북마크 등 대비)
 $routes->get('register', static fn () => redirect()->to('/auth/register'));
@@ -47,7 +48,8 @@ $routes->get('admin', static fn () => redirect()->to('/admin/login'));
 $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {
     $routes->get('login', 'Auth::loginForm');
     $routes->post('login', 'Auth::login');
-    $routes->get('logout', 'Auth::logout');
+    // 로그아웃은 POST만 (다른 사이트가 링크/이미지로 강제 로그아웃시키는 것 방지)
+$routes->post('logout', 'Auth::logout');
     $routes->get('dashboard', 'Dashboard::index', ['filter' => 'adminAuth']);
     $routes->get('members', 'Dashboard::members', ['filter' => 'adminAuth']);
     $routes->get('links', 'Dashboard::links', ['filter' => 'adminAuth']);

@@ -66,7 +66,7 @@ $pageTitle = trim(strip_tags($this->renderSection('title'))) ?: (string) ($title
 
             <hr>
             <div class="small text-muted mb-2 text-truncate"><?= esc(session()->get('user_email')) ?></div>
-            <a href="/logout" class="btn btn-outline-secondary btn-sm w-100">로그아웃</a>
+            <form action="/logout" method="post"><?= csrf_field() ?><button type="submit" class="btn btn-outline-secondary btn-sm w-100">로그아웃</button></form>
         </nav>
 
         <!-- 본문 -->

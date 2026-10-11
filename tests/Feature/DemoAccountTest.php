@@ -123,7 +123,7 @@ final class DemoAccountTest extends CIUnitTestCase
     // 안내 띠의 "내 계정 만들기"는 로그아웃 후 회원가입 화면으로 보내는지
     public function testLogoutToRegister(): void
     {
-        $result = $this->withSession($this->demoSession())->get('/logout?to=register');
+        $result = $this->withSession($this->demoSession())->post('/logout', [csrf_token() => csrf_hash(), 'to' => 'register']);
 
         $this->assertTrue($result->isRedirect());
         $this->assertStringEndsWith('/auth/register', $result->getRedirectUrl());

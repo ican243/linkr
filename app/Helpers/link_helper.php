@@ -2,6 +2,31 @@
 
 use App\Models\UserModel;
 
+if (! function_exists('mask_ip')) {
+    /**
+     * 방문자 IP의 마지막 부분을 가려서 저장/표시한다 (개인정보 최소화).
+     * - IPv4: 203.0.113.57 → 203.0.113.0 (같은 동네/통신사 정도만 알 수 있음)
+     * - IPv6: 앞 3덩어리(/48)만 남김 → 2001:db8:85a3::
+     * 형식이 이상한 값은 아예 저장하지 않음(null).
+     */
+    function mask_ip(?string $ip): ?string
+    {
+        $ip = trim((string) $ip);
+
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            return preg_replace('/\.\d+$/', '.0', $ip);
+        }
+
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $bin = inet_pton($ip);
+
+            return inet_ntop(substr($bin, 0, 6) . str_repeat("\0", 10));
+        }
+
+        return null;
+    }
+}
+
 if (! function_exists('custom_domain_active')) {
     /**
      * 이 회원의 커스텀 도메인을 지금 쓸 수 있는지.

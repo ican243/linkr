@@ -4,6 +4,7 @@
 namespace App\Controllers;
 
 use App\Libraries\DemoAccount;
+use App\Libraries\RateLimit;
 use App\Models\ClickLogModel;
 use App\Models\LinkModel;
 use App\Models\SettingModel;
@@ -354,6 +355,15 @@ class Link extends BaseController
             return $this->handleUnavailable($link);
         }
 
+        // 비밀번호를 무한정 찍어보는 것 방지: 같은 IP가 같은 링크에 5분 동안 10번까지만 시도 가능
+        if (! RateLimit::allow('link_pw', $this->request->getIPAddress() . '|' . $link['id'], 10, 300)) {
+            return $this->response->setStatusCode(429)->setBody(view('link/password', [
+                'code'   => $code,
+                'error'  => '비밀번호를 너무 많이 틀렸습니다. 5분 뒤에 다시 시도해 주세요.',
+                'layout' => $this->visitorLayoutFor($link),
+            ]));
+        }
+
         $input = $this->request->getPost('password');
 
         if (empty($link['password']) || ! password_verify((string) $input, $link['password'])) {
@@ -464,11 +474,13 @@ class Link extends BaseController
             return $this->handleUnavailable($link);
         }
 
+        helper('link');
         $logModel = new ClickLogModel();
         $logModel->insert([
             'link_id'    => $link['id'],
             'clicked_at' => date('Y-m-d H:i:s'),
-            'ip_address' => $this->request->getIPAddress(),
+            // 방문자 IP는 마지막 자리를 가린 채로만 저장 (링크 주인에게 방문자 개인을 특정할 수 있는 정보를 주지 않음)
+            'ip_address' => mask_ip($this->request->getIPAddress()),
             'user_agent' => (string) $this->request->getUserAgent(),
         ]);
 

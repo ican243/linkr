@@ -34,6 +34,10 @@
             <label class="form-label">이름(선택)</label>
             <input type="text" name="name" class="form-control">
         </div>
+        <!-- 봇 차단용 칸: 사람에게는 보이지 않음 (Auth::register 참고) -->
+        <div class="king-hp" aria-hidden="true">
+            <label>웹사이트 <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+        </div>
         <button type="submit" class="btn btn-primary w-100">가입하기</button>
     </form>
 

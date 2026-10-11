@@ -46,6 +46,7 @@ class Auth extends BaseController
         return redirect()->to('/admin/dashboard');
     }
 
+    // 일반 로그아웃과 같은 이유로 POST + CSRF로만 받음
     public function logout()
     {
         // destroy()로 세션 전체를 지우지 않고 admin 관련 키만 제거한다.

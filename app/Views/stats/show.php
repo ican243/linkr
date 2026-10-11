@@ -55,7 +55,7 @@
             <thead class="table-light">
                 <tr>
                     <th>시각</th>
-                    <th>IP</th>
+                    <th>IP <span class="fw-normal text-muted small">(일부 가림)</span></th>
                     <th>브라우저/기기(User-Agent)</th>
                 </tr>
             </thead>

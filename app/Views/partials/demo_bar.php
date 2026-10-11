@@ -9,7 +9,11 @@ $blocked = session()->getFlashdata('demo_blocked');
 <div class="king-demo-bar">
     <div class="container-fluid d-flex flex-wrap align-items-center justify-content-center gap-2 py-2 px-3 text-center">
         <span><strong>체험 계정</strong>으로 둘러보는 중이에요<span class="d-none d-sm-inline"> · 매일 새벽 4시에 처음 상태로 돌아가요</span></span>
-        <a href="/logout?to=register" class="king-demo-bar-link">내 계정 만들기 ›</a>
+        <form action="/logout" method="post" class="m-0">
+            <?= csrf_field() ?>
+            <input type="hidden" name="to" value="register">
+            <button type="submit" class="king-demo-bar-link">내 계정 만들기 ›</button>
+        </form>
     </div>
 </div>
 <?php if ($blocked) : ?>

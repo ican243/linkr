@@ -201,7 +201,7 @@ $navItems        = [
                 </button>
                 <div class="ms-auto d-flex align-items-center gap-3">
                     <span class="admin-topbar-email"><?= esc(session()->get('admin_email')) ?></span>
-                    <a href="/admin/logout" class="btn admin-btn admin-btn-secondary btn-sm">로그아웃</a>
+                    <form action="/admin/logout" method="post" class="m-0"><?= csrf_field() ?><button type="submit" class="btn admin-btn admin-btn-secondary btn-sm">로그아웃</button></form>
                 </div>
             </header>
             <main class="admin-content">

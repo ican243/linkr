@@ -36,7 +36,7 @@ $pageDescription = trim(strip_tags($this->renderSection('description')));
                     <?php if ($isLoggedIn) : ?>
                         <a href="/dashboard" class="btn btn-outline-primary btn-sm">내 대시보드</a>
                         <a href="/account" class="btn btn-outline-secondary btn-sm">계정 설정</a>
-                        <a href="/logout" class="btn btn-outline-secondary btn-sm">로그아웃</a>
+                        <form action="/logout" method="post" class="d-grid"><?= csrf_field() ?><button type="submit" class="btn btn-outline-secondary btn-sm">로그아웃</button></form>
                     <?php else : ?>
                         <a href="/auth/login" class="btn btn-outline-primary btn-sm">로그인</a>
                         <a href="/auth/register" class="btn btn-primary btn-sm">회원가입</a>

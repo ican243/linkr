@@ -186,8 +186,8 @@ class DemoAccount
         return [
             'link_id'    => $linkId,
             'clicked_at' => date('Y-m-d H:i:s', $timestamp),
-            // 실제 방문자 IP가 아닌 문서/예시용 IP 대역(203.0.113.0/24)을 사용
-            'ip_address' => '203.0.113.' . random_int(1, 254),
+            // 실제 방문자 IP가 아닌 문서/예시용 IP 대역(203.0.113.0/24) — 실제 클릭처럼 마지막 자리는 가린 형태
+            'ip_address' => '203.0.113.0',
             'user_agent' => $userAgents[array_rand($userAgents)],
         ];
     }

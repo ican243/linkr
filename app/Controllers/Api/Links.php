@@ -5,6 +5,7 @@ namespace App\Controllers\Api;
 use App\Controllers\BaseController;
 use App\Controllers\Link;
 use App\Libraries\PlanTransition;
+use App\Libraries\RateLimit;
 use App\Models\ApiKeyModel;
 use App\Models\LinkModel;
 use App\Models\UserModel;
@@ -17,6 +18,10 @@ class Links extends BaseController
     // API 자체는 요금제 페이지 안내대로 엔터프라이즈 요금제 전용(requireEnterprisePlan 참고).
     public function create()
     {
+        if ($limited = $this->rateLimited()) {
+            return $limited;
+        }
+
         $user = $this->authenticate();
 
         if ($user === null) {
@@ -77,6 +82,10 @@ class Links extends BaseController
     // 내가 만든 링크 목록 조회 (최신순, 20개씩 페이지네이션)
     public function index()
     {
+        if ($limited = $this->rateLimited()) {
+            return $limited;
+        }
+
         $user = $this->authenticate();
 
         if ($user === null) {
@@ -116,6 +125,10 @@ class Links extends BaseController
     // 링크 삭제 (내 소유 링크만 가능 — 다른 사람 API 키로 남의 링크를 지울 수 없게 소유자 확인)
     public function delete(string $code)
     {
+        if ($limited = $this->rateLimited()) {
+            return $limited;
+        }
+
         $user = $this->authenticate();
 
         if ($user === null) {
@@ -152,6 +165,18 @@ class Links extends BaseController
         return $this->response->setStatusCode(403)->setJSON([
             'error' => 'API 이용은 엔터프라이즈 요금제 전용 기능입니다. 요금제를 업그레이드해주세요.',
         ]);
+    }
+
+    // 호출 횟수 제한: 같은 IP는 1분에 60번까지 (키를 바꿔가며 찍어보는 것과 과도한 호출 둘 다 막음)
+    private function rateLimited(): ?ResponseInterface
+    {
+        if (RateLimit::allow('api', $this->request->getIPAddress(), 60, 60)) {
+            return null;
+        }
+
+        return $this->response->setStatusCode(429)
+            ->setHeader('Retry-After', (string) RateLimit::retryAfter())
+            ->setJSON(['error' => '요청이 너무 많습니다. 잠시 후 다시 시도해주세요. (1분에 60번까지)']);
     }
 
     // Authorization 헤더의 API 키를 검사해서, 주인 회원 정보를 반환한다. 실패하면 null.
