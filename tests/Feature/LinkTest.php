@@ -23,6 +23,49 @@ final class LinkTest extends CIUnitTestCase
         ]);
     }
 
+    // 대시보드 "최근 링크" 표의 원본 주소 칸에 단축 주소가 아니라 실제 원본 주소가 나오는지.
+    public function testDashboardShowsOriginalUrl(): void
+    {
+        $userId = $this->loginAsNewUser('linktest-dash@example.com', 'free');
+
+        (new LinkModel())->insert([
+            'user_id'      => $userId,
+            'original_url' => 'https://example.com/original-page',
+            'short_code'   => 'dashT1',
+        ]);
+
+        $result = $this->withSession(['isLoggedIn' => true, 'user_id' => $userId])->get('/dashboard');
+
+        $result->assertOK();
+        $result->assertSee('https://example.com/original-page');
+    }
+
+    // javascript:, file: 같은 위험한 주소는 단축할 수 없어야 하고, 한글 주소는 정상적으로 만들어져야 한다.
+    public function testOnlyHttpUrlsCanBeShortened(): void
+    {
+        $userId = $this->loginAsNewUser('linktest-scheme@example.com', 'free');
+
+        foreach (['javascript://%0aalert(1)', 'file:///etc/passwd'] as $badUrl) {
+            $result = $this->withSession(['isLoggedIn' => true, 'user_id' => $userId])
+                ->post('/shorten', [
+                    csrf_token()   => csrf_hash(),
+                    'original_url' => $badUrl,
+                ]);
+
+            $result->assertSee('http:// 또는 https://로 시작하는 올바른 URL을 입력해주세요');
+        }
+
+        $this->assertSame(0, (new LinkModel())->where('user_id', $userId)->countAllResults());
+
+        $this->withSession(['isLoggedIn' => true, 'user_id' => $userId])
+            ->post('/shorten', [
+                csrf_token()   => csrf_hash(),
+                'original_url' => 'https://ko.wikipedia.org/wiki/서울',
+            ]);
+
+        $this->assertSame(1, (new LinkModel())->where('user_id', $userId)->countAllResults());
+    }
+
     // 비밀번호 보호는 pricing.php에서 "프로 요금제부터"라고 안내하는 기능이라,
     // 무료 회원이 채워서 만들려고 하면 막혀야 한다. (만료일은 이제 무료도 사용함 — 아래 별도 테스트)
     public function testFreePlanCannotCreatePasswordProtectedLink(): void

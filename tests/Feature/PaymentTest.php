@@ -64,6 +64,30 @@ final class PaymentTest extends CIUnitTestCase
 
         $result->assertOK();
         $result->assertSee('결제 완료');
+        $result->assertSee('프로 요금제로 업그레이드되었습니다');
+    }
+
+    // 엔터프라이즈 결제 완료 화면에 "프로"가 아니라 실제 결제한 요금제 이름이 나오는지.
+    public function testSuccessPageShowsPaidPlanName(): void
+    {
+        $userId  = $this->createUser();
+        $orderId = 'king_test_completed_ent';
+
+        (new PaymentModel())->insert([
+            'user_id'     => $userId,
+            'order_id'    => $orderId,
+            'amount'      => 79800,
+            'plan'        => 'enterprise',
+            'status'      => 'completed',
+            'approved_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $result = $this->withSession(['isLoggedIn' => true, 'user_id' => $userId])
+            ->get('/payment/success?paymentKey=whatever&orderId=' . $orderId . '&amount=79800');
+
+        $result->assertOK();
+        $result->assertSee('엔터프라이즈 요금제로 업그레이드되었습니다');
+        $result->assertDontSee('프로 요금제로 업그레이드되었습니다');
     }
 
     // 엔터프라이즈 요금제로 결제를 시작하면, pricing.php에 적힌 79,800원 그대로 주문이 생성되는지

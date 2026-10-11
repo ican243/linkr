@@ -177,7 +177,7 @@ class Payment extends BaseController
         // ② 이미 완료 처리된 주문이면(새로고침 등으로 이 화면에 다시 들어온 경우),
         //    토스에 승인 요청을 또 보내지 않고 그냥 완료 화면만 다시 보여줌.
         if ($payment['status'] === 'completed') {
-            return view('payment/success', ['payment' => $payment]);
+            return view('payment/success', ['payment' => $payment, 'planLabel' => self::PLAN_LABELS[$payment['plan']] ?? $payment['plan']]);
         }
 
         // ③ 토스 서버에 "진짜 승인해줘" 요청 (여기서만 시크릿 키 사용, 서버 대 서버 통신)
@@ -235,7 +235,7 @@ class Payment extends BaseController
             'next_plan_at'    => null,
         ]);
 
-        return view('payment/success', ['payment' => $payment]);
+        return view('payment/success', ['payment' => $payment, 'planLabel' => self::PLAN_LABELS[$payment['plan']] ?? $payment['plan']]);
     }
 
     public function fail()

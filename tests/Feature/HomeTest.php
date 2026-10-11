@@ -46,4 +46,16 @@ final class HomeTest extends CIUnitTestCase
         $result->assertOK();
         $result->assertSee('Linkr는 이런 서비스예요');
     }
+
+    // 요금제 페이지: 실제로 제공하지 않는 것(연간 결제, 24/7 지원)과 "준비 중" 문구가 없어야 한다.
+    public function testPricingPageHasNoUnsupportedPromises(): void
+    {
+        $result = $this->get('/pricing');
+
+        $result->assertOK();
+        $result->assertSee('매월 결제');
+        $result->assertDontSee('연간 결제');
+        $result->assertDontSee('24/7');
+        $result->assertDontSee('준비 중');
+    }
 }

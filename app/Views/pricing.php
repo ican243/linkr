@@ -1,12 +1,8 @@
 <?php
 $isLoggedIn = (bool) session()->get('isLoggedIn');
 
-// 연간 결제는 아직 실제 결제 연동은 없고 화면 표시만(20% 할인 가정) 계산해서 보여줌.
-// 월간 금액($proPrice/$enterprisePrice)은 관리자가 /admin/settings에서 바꾸면 여기도 같이 바뀜.
-$proPriceYearly       = (int) round($proPrice * 0.8);
-$proPriceYearlySaved  = ($proPrice - $proPriceYearly) * 12;
-$enterprisePriceYearly      = (int) round($enterprisePrice * 0.8);
-$enterprisePriceYearlySaved = ($enterprisePrice - $enterprisePriceYearly) * 12;
+// 월 요금($proPrice/$enterprisePrice)은 관리자가 /admin/settings에서 바꾸면 여기도 같이 바뀜.
+// (예전엔 "연간 결제 20% 할인" 토글이 있었는데, 실제 결제는 월 단위만 지원해서 화면과 실제가 달라 제거함)
 
 $planOrder = ['free' => 0, 'pro' => 1, 'enterprise' => 2];
 $planLabel = ['free' => '무료', 'pro' => '프로', 'enterprise' => '엔터프라이즈'];
@@ -34,12 +30,6 @@ $planState = static function (string $plan) use ($currentPlan, $planOrder): stri
 <div class="text-center py-4">
     <h1 class="fw-bold">요금제</h1>
     <p class="text-muted">필요한 만큼만, 언제든 변경할 수 있어요.</p>
-
-    <!-- 월간/연간 토글 (화면 표시만 바뀌고, 아직 결제 연동은 없음) -->
-    <div class="btn-group mb-2" role="group" aria-label="결제 주기 선택">
-        <button type="button" class="btn btn-outline-primary active" id="btn-monthly" onclick="showBilling('monthly')">월간 결제</button>
-        <button type="button" class="btn btn-outline-primary" id="btn-yearly" onclick="showBilling('yearly')">연간 결제 <span class="badge bg-danger">20% 할인</span></button>
-    </div>
 </div>
 
 <?php if (session()->getFlashdata('message')) : ?>
@@ -108,18 +98,14 @@ $planState = static function (string $plan) use ($currentPlan, $planOrder): stri
             <div class="fs-2">🚀</div>
             <h2 class="h5 mt-2">프로</h2>
             <p class="display-6 mb-0">
-                <span class="price-monthly"><?= number_format($proPrice) ?>원</span>
-                <span class="price-yearly d-none"><?= number_format($proPriceYearly) ?>원</span>
-                <span class="fs-6 text-muted">/월</span>
+                <?= number_format($proPrice) ?>원<span class="fs-6 text-muted">/월</span>
             </p>
-            <p class="text-muted small yearly-note d-none">연간 결제 시 연 <?= number_format($proPriceYearly * 12) ?>원 (<?= number_format($proPriceYearlySaved) ?>원 절약)</p>
-            <p class="text-muted small monthly-note">&nbsp;</p>
+            <p class="text-muted small">매월 결제 · 언제든 변경 가능</p>
             <ul class="list-unstyled small text-muted flex-grow-1">
                 <li>✔ 무제한 링크</li>
                 <li>✔ 커스텀 도메인 1개</li>
                 <li>✔ 비밀번호 보호 / 만료일</li>
                 <li>✔ 고급 통계, CSV 내보내기</li>
-                <li>✔ 우선 고객 지원</li>
             </ul>
             <?php $proState = $planState('pro'); ?>
             <?php if ($isLoggedIn && $proState === 'current') : ?>
@@ -147,18 +133,14 @@ $planState = static function (string $plan) use ($currentPlan, $planOrder): stri
             <div class="fs-2">🏢</div>
             <h2 class="h5 mt-2">엔터프라이즈</h2>
             <p class="display-6 mb-0">
-                <span class="price-monthly"><?= number_format($enterprisePrice) ?>원</span>
-                <span class="price-yearly d-none"><?= number_format($enterprisePriceYearly) ?>원</span>
-                <span class="fs-6 text-muted">/월</span>
+                <?= number_format($enterprisePrice) ?>원<span class="fs-6 text-muted">/월</span>
             </p>
-            <p class="text-muted small yearly-note d-none">연간 결제 시 연 <?= number_format($enterprisePriceYearly * 12) ?>원 (<?= number_format($enterprisePriceYearlySaved) ?>원 절약)</p>
-            <p class="text-muted small monthly-note">&nbsp;</p>
+            <p class="text-muted small">매월 결제 · 언제든 변경 가능</p>
             <ul class="list-unstyled small text-muted flex-grow-1">
                 <li>✔ 프로의 모든 기능</li>
                 <li>✔ 커스텀 도메인 1개</li>
                 <li>✔ API 액세스</li>
                 <li>✔ 화이트라벨링</li>
-                <li>✔ 24/7 전담 지원</li>
             </ul>
             <?php $entState = $planState('enterprise'); ?>
             <?php if ($isLoggedIn && $entState === 'current') : ?>
@@ -193,7 +175,6 @@ $planState = static function (string $plan) use ($currentPlan, $planOrder): stri
             <tr><td class="text-start">CSV 내보내기</td><td>✖</td><td>✔</td><td>✔</td></tr>
             <tr><td class="text-start">API 액세스</td><td>✖</td><td>✖</td><td>✔</td></tr>
             <tr><td class="text-start">화이트라벨링</td><td>✖</td><td>✖</td><td>✔</td></tr>
-            <tr><td class="text-start">고객 지원</td><td>이메일</td><td>우선 지원</td><td>24/7 전담</td></tr>
         </tbody>
     </table>
 </div>
@@ -218,50 +199,29 @@ $planState = static function (string $plan) use ($currentPlan, $planOrder): stri
             </button>
         </h3>
         <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
-            <div class="accordion-body">네, 언제든 상위/하위 요금제로 변경할 수 있도록 준비 중입니다.</div>
+            <div class="accordion-body">네, 이 페이지에서 언제든 변경할 수 있습니다. 상위 요금제로 올리면 지금 요금제의 남은 기간만큼 금액을 차감하고 바로 적용되며, 하위 요금제로 내리면 지금 이용 기간이 끝나는 날 자동으로 전환됩니다(그 전까지 예약 취소 가능).</div>
         </div>
     </div>
     <div class="accordion-item">
         <h3 class="accordion-header">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-                연간 결제 할인은 얼마나 되나요?
+                환불 정책이 어떻게 되나요?
             </button>
         </h3>
         <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
-            <div class="accordion-body">연간 결제 시 월 요금 기준 20% 할인된 금액이 적용됩니다.</div>
+            <div class="accordion-body">Linkr는 시연용 서비스라 결제는 토스페이먼츠 테스트 모드로 진행되며, 실제 금액이 청구되지 않습니다. 결제 흐름을 부담 없이 체험해보세요.</div>
         </div>
     </div>
     <div class="accordion-item">
         <h3 class="accordion-header">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
-                환불 정책이 어떻게 되나요?
-            </button>
-        </h3>
-        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
-            <div class="accordion-body">결제 후 7일 이내에는 전액 환불이 가능하도록 준비 중입니다.</div>
-        </div>
-    </div>
-    <div class="accordion-item">
-        <h3 class="accordion-header">
-            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
                 엔터프라이즈 요금제는 어떻게 시작하나요?
             </button>
         </h3>
-        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
-            <div class="accordion-body">회원가입 후 문의를 남겨주시면 필요에 맞는 맞춤 견적을 안내해드릴 예정입니다.</div>
+        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#pricingFaq">
+            <div class="accordion-body">회원가입 후 이 페이지에서 "엔터프라이즈 시작하기"를 누르면 바로 결제하고 사용할 수 있습니다. 프로 요금제를 이용 중이라면 남은 기간만큼 차감된 금액만 결제하면 됩니다.</div>
         </div>
     </div>
 </div>
-
-<script>
-function showBilling(mode) {
-    const isYearly = mode === 'yearly';
-    document.querySelectorAll('.price-monthly').forEach(el => el.classList.toggle('d-none', isYearly));
-    document.querySelectorAll('.price-yearly').forEach(el => el.classList.toggle('d-none', !isYearly));
-    document.querySelectorAll('.yearly-note').forEach(el => el.classList.toggle('d-none', !isYearly));
-    document.getElementById('btn-monthly').classList.toggle('active', !isYearly);
-    document.getElementById('btn-yearly').classList.toggle('active', isYearly);
-}
-</script>
 
 <?= $this->endSection() ?>
