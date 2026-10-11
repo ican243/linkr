@@ -77,6 +77,7 @@ $statusPill = [
     'failed'    => 'pill-failed',
 ];
 $statusText = ['completed' => '완료', 'pending' => '대기중', 'failed' => '실패'];
+$typeLabels = ['new' => '신규', 'upgrade' => '업그레이드', 'renewal' => '갱신'];
 ?>
 
 <div class="admin-card">
@@ -95,6 +96,7 @@ $statusText = ['completed' => '완료', 'pending' => '대기중', 'failed' => '�
                     <th>주문일</th>
                     <th>회원 이메일</th>
                     <th>요금제</th>
+                    <th>유형</th>
                     <th>금액</th>
                     <th>결제수단</th>
                     <th>상태</th>
@@ -108,6 +110,7 @@ $statusText = ['completed' => '완료', 'pending' => '대기중', 'failed' => '�
                         <td class="cell-sub"><?= esc(date('Y-m-d H:i', strtotime($p['created_at']))) ?></td>
                         <td class="cell-email"><?= esc($p['user_email']) ?></td>
                         <td><?= esc($planLabels[$p['plan']] ?? $p['plan']) ?></td>
+                        <td class="cell-sub"><?= esc($typeLabels[$p['type'] ?? 'new'] ?? $p['type']) ?></td>
                         <td><?= number_format((int) $p['amount']) ?>원</td>
                         <td><?= esc($p['method'] ?? '-') ?></td>
                         <td><span class="pill <?= esc($pill) ?>"><?= esc($label) ?></span></td>
@@ -167,9 +170,13 @@ $statusText = ['completed' => '완료', 'pending' => '대기중', 'failed' => '�
                             <dt class="col-4">회원</dt><dd class="col-8"><?= esc($p['user_email']) ?></dd>
                             <dt class="col-4">주문일시</dt><dd class="col-8"><?= esc(date('Y-m-d H:i', strtotime($p['created_at']))) ?></dd>
                             <dt class="col-4">요금제</dt><dd class="col-8"><?= esc($planLabels[$p['plan']] ?? $p['plan']) ?></dd>
+                            <dt class="col-4">유형</dt><dd class="col-8"><?= esc($typeLabels[$p['type'] ?? 'new'] ?? $p['type']) ?></dd>
                             <dt class="col-4">금액</dt><dd class="col-8"><?= number_format((int) $p['amount']) ?>원</dd>
                             <dt class="col-4">결제수단</dt><dd class="col-8"><?= esc($p['method'] ?? '-') ?></dd>
                             <dt class="col-4">상태</dt><dd class="col-8"><span class="pill <?= esc($pill) ?>"><?= esc($label) ?></span></dd>
+                            <?php if (! empty($p['change_note'])) : ?>
+                                <dt class="col-4">비고</dt><dd class="col-8"><?= esc($p['change_note']) ?></dd>
+                            <?php endif ?>
                             <?php if (! empty($p['refunded_at'])) : ?>
                                 <dt class="col-4">환불일시</dt><dd class="col-8"><?= esc(date('Y-m-d H:i', strtotime($p['refunded_at']))) ?></dd>
                                 <dt class="col-4">환불 사유</dt><dd class="col-8"><?= esc($p['cancel_reason']) ?></dd>

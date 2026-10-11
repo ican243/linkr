@@ -11,7 +11,7 @@
       protected $useAutoIncrement = true;
       protected $returnType       = 'array';
       protected $allowedFields    = [
-          'user_id', 'order_id', 'amount', 'plan', 'status', 'payment_key', 'method', 'receipt_url',
+          'user_id', 'order_id', 'amount', 'expected_amount', 'plan', 'type', 'change_note', 'status', 'payment_key', 'method', 'receipt_url',
           'admin_id', 'admin_memo', 'refunded_at', 'cancel_reason', 'toss_response', 'approved_at',
       ];
       

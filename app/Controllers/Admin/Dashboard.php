@@ -234,7 +234,13 @@ class Dashboard extends BaseController
         // 새로 부여함 (기존에 남아있던 기간에 더하지 않음 — admin이 늘 명시적으로 정하는 방식).
         $expiresAt = $plan === 'free' ? null : date('Y-m-d H:i:s', strtotime("+{$months} month"));
 
-        $userModel->update($id, ['plan' => $plan, 'plan_expires_at' => $expiresAt]);
+        // 관리자가 요금제를 직접 바꾸면, 남아있던 다운그레이드 예약은 의미가 없어져서 같이 지움.
+        $userModel->update($id, [
+            'plan'            => $plan,
+            'plan_expires_at' => $expiresAt,
+            'next_plan'       => null,
+            'next_plan_at'    => null,
+        ]);
 
         if ($plan !== 'free') {
             (new PaymentModel())->insert([

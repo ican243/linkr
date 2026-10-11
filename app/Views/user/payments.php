@@ -30,6 +30,7 @@
         'pending'   => ['label' => '대기중', 'class' => 'bg-warning text-dark'],
         'failed'    => ['label' => '실패', 'class' => 'bg-danger'],
     ];
+    $typeLabels = ['new' => '신규', 'upgrade' => '업그레이드', 'renewal' => '갱신'];
 
     $rows = [];
     foreach ($payments as $p) {
@@ -57,6 +58,7 @@
                 <tr>
                     <th>주문일</th>
                     <th>요금제</th>
+                    <th>유형</th>
                     <th>금액</th>
                     <th>결제수단</th>
                     <th>이용기간</th>
@@ -75,6 +77,7 @@
                             </button>
                         </td>
                         <td><?= esc($planLabels[$p['plan']] ?? $p['plan']) ?></td>
+                        <td class="small"><?= esc($typeLabels[$p['type'] ?? 'new'] ?? $p['type']) ?></td>
                         <td><?= number_format((int) $p['amount']) ?>원</td>
                         <td><?= esc($p['method'] ?? '-') ?></td>
                         <td class="small"><?= esc($row['period']) ?></td>
@@ -103,6 +106,7 @@
                     </div>
                     <span class="badge <?= esc($row['badge']['class']) ?>"><?= esc($row['badge']['label']) ?></span>
                 </div>
+                <div class="small text-muted mb-1">유형: <?= esc($typeLabels[$p['type'] ?? 'new'] ?? $p['type']) ?></div>
                 <div class="small text-muted mb-1">금액: <?= number_format((int) $p['amount']) ?>원</div>
                 <div class="small text-muted mb-1">결제수단: <?= esc($p['method'] ?? '-') ?></div>
                 <div class="small text-muted mb-2">이용기간: <?= esc($row['period']) ?></div>
@@ -141,8 +145,14 @@
                             <dd class="col-7"><?= esc(date('Y-m-d H:i', strtotime($p['created_at']))) ?></dd>
                             <dt class="col-5">요금제</dt>
                             <dd class="col-7"><?= esc($planLabels[$p['plan']] ?? $p['plan']) ?></dd>
+                            <dt class="col-5">유형</dt>
+                            <dd class="col-7"><?= esc($typeLabels[$p['type'] ?? 'new'] ?? $p['type']) ?></dd>
                             <dt class="col-5">금액</dt>
                             <dd class="col-7"><?= number_format((int) $p['amount']) ?>원</dd>
+                            <?php if (! empty($p['change_note'])) : ?>
+                                <dt class="col-5">비고</dt>
+                                <dd class="col-7"><?= esc($p['change_note']) ?></dd>
+                            <?php endif ?>
                             <dt class="col-5">결제수단</dt>
                             <dd class="col-7"><?= esc($p['method'] ?? '-') ?></dd>
                             <dt class="col-5">이용기간</dt>

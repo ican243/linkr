@@ -7,6 +7,25 @@ $proPriceYearly       = (int) round($proPrice * 0.8);
 $proPriceYearlySaved  = ($proPrice - $proPriceYearly) * 12;
 $enterprisePriceYearly      = (int) round($enterprisePrice * 0.8);
 $enterprisePriceYearlySaved = ($enterprisePrice - $enterprisePriceYearly) * 12;
+
+$planOrder = ['free' => 0, 'pro' => 1, 'enterprise' => 2];
+$planLabel = ['free' => '무료', 'pro' => '프로', 'enterprise' => '엔터프라이즈'];
+
+// 만료된 유료 요금제는 "사실상 무료"로 취급해서 버튼 상태를 판단함(Payment::checkout()과 동일 기준).
+$currentPlan = 'free';
+if (! empty($user)) {
+    $isActive = $user['plan'] === 'free' || empty($user['plan_expires_at']) || strtotime($user['plan_expires_at']) > time();
+    $currentPlan = $isActive ? $user['plan'] : 'free';
+}
+
+// 각 요금제 카드에 대해: 지금 이용 중인지, 다운그레이드 대상인지 미리 계산.
+$planState = static function (string $plan) use ($currentPlan, $planOrder): string {
+    if ($plan === $currentPlan) {
+        return 'current';
+    }
+
+    return $planOrder[$plan] < $planOrder[$currentPlan] ? 'downgrade' : 'upgrade';
+};
 ?>
 <?= $this->extend('layout') ?>
 
@@ -22,6 +41,23 @@ $enterprisePriceYearlySaved = ($enterprisePrice - $enterprisePriceYearly) * 12;
         <button type="button" class="btn btn-outline-primary" id="btn-yearly" onclick="showBilling('yearly')">연간 결제 <span class="badge bg-danger">20% 할인</span></button>
     </div>
 </div>
+
+<?php if (session()->getFlashdata('message')) : ?>
+    <div class="alert alert-success text-center"><?= esc(session()->getFlashdata('message')) ?></div>
+<?php endif ?>
+<?php if (session()->getFlashdata('error')) : ?>
+    <div class="alert alert-danger text-center"><?= esc(session()->getFlashdata('error')) ?></div>
+<?php endif ?>
+
+<?php if (! empty($user['next_plan']) && ! empty($user['next_plan_at'])) : ?>
+    <div class="alert alert-info text-center">
+        <?= esc(date('n월 j일', strtotime($user['next_plan_at']))) ?>부터 <strong><?= esc($planLabel[$user['next_plan']] ?? $user['next_plan']) ?></strong>(으)로 전환 예정입니다.
+        <form action="/pricing/cancel-downgrade" method="post" class="d-inline">
+            <?= csrf_field() ?>
+            <button type="submit" class="btn btn-sm btn-outline-secondary ms-2">예약 취소</button>
+        </form>
+    </div>
+<?php endif ?>
 
 <?php if (! $isLoggedIn) : ?>
     <div class="alert alert-light border text-center small">
@@ -47,7 +83,22 @@ $enterprisePriceYearlySaved = ($enterprisePrice - $enterprisePriceYearly) * 12;
                 <li>✖ 커스텀 도메인</li>
                 <li>✖ 비밀번호 보호 / 만료일</li>
             </ul>
-            <a href="<?= $isLoggedIn ? '/dashboard' : '/auth/register' ?>" class="btn btn-outline-primary w-100">무료로 시작하기</a>
+            <?php $freeState = $planState('free'); ?>
+            <?php if ($isLoggedIn && $freeState === 'current') : ?>
+                <button type="button" class="btn btn-outline-secondary w-100" disabled>이용 중</button>
+            <?php elseif ($isLoggedIn && $freeState === 'downgrade') : ?>
+                <?php if (! empty($user['next_plan'])) : ?>
+                    <button type="button" class="btn btn-outline-secondary w-100" disabled>예약됨</button>
+                <?php else : ?>
+                    <form action="/pricing/downgrade" method="post">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="plan" value="free">
+                        <button type="submit" class="btn btn-outline-secondary w-100">다운그레이드 예약</button>
+                    </form>
+                <?php endif ?>
+            <?php else : ?>
+                <a href="<?= $isLoggedIn ? '/dashboard' : '/auth/register' ?>" class="btn btn-outline-primary w-100">무료로 시작하기</a>
+            <?php endif ?>
         </div>
     </div>
 
@@ -70,7 +121,24 @@ $enterprisePriceYearlySaved = ($enterprisePrice - $enterprisePriceYearly) * 12;
                 <li>✔ 고급 통계, CSV 내보내기</li>
                 <li>✔ 우선 고객 지원</li>
             </ul>
-            <a href="<?= $isLoggedIn ? '/payment/checkout?plan=pro' : '/auth/register' ?>" class="btn btn-primary w-100">프로 시작하기</a>
+            <?php $proState = $planState('pro'); ?>
+            <?php if ($isLoggedIn && $proState === 'current') : ?>
+                <button type="button" class="btn btn-outline-secondary w-100" disabled>
+                    이용 중<?php if (! empty($user['plan_expires_at'])) : ?> (~<?= esc(date('Y-m-d', strtotime($user['plan_expires_at']))) ?>)<?php endif ?>
+                </button>
+            <?php elseif ($isLoggedIn && $proState === 'downgrade') : ?>
+                <?php if (! empty($user['next_plan'])) : ?>
+                    <button type="button" class="btn btn-outline-secondary w-100" disabled>예약됨</button>
+                <?php else : ?>
+                    <form action="/pricing/downgrade" method="post">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="plan" value="pro">
+                        <button type="submit" class="btn btn-outline-secondary w-100">다운그레이드 예약</button>
+                    </form>
+                <?php endif ?>
+            <?php else : ?>
+                <a href="<?= $isLoggedIn ? '/payment/checkout?plan=pro' : '/auth/register' ?>" class="btn btn-primary w-100"><?= $isLoggedIn && $currentPlan !== 'free' ? '업그레이드' : '프로 시작하기' ?></a>
+            <?php endif ?>
         </div>
     </div>
 
@@ -92,7 +160,14 @@ $enterprisePriceYearlySaved = ($enterprisePrice - $enterprisePriceYearly) * 12;
                 <li>✔ 화이트라벨링</li>
                 <li>✔ 24/7 전담 지원</li>
             </ul>
-            <a href="<?= $isLoggedIn ? '/payment/checkout?plan=enterprise' : '/auth/register' ?>" class="btn btn-outline-primary w-100">엔터프라이즈 시작하기</a>
+            <?php $entState = $planState('enterprise'); ?>
+            <?php if ($isLoggedIn && $entState === 'current') : ?>
+                <button type="button" class="btn btn-outline-secondary w-100" disabled>
+                    이용 중<?php if (! empty($user['plan_expires_at'])) : ?> (~<?= esc(date('Y-m-d', strtotime($user['plan_expires_at']))) ?>)<?php endif ?>
+                </button>
+            <?php else : ?>
+                <a href="<?= $isLoggedIn ? '/payment/checkout?plan=enterprise' : '/auth/register' ?>" class="btn btn-outline-primary w-100"><?= $isLoggedIn && $currentPlan === 'pro' ? '업그레이드' : '엔터프라이즈 시작하기' ?></a>
+            <?php endif ?>
         </div>
     </div>
 </div>

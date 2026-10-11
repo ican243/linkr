@@ -20,6 +20,9 @@ class Payment extends BaseController
         'enterprise' => '엔터프라이즈',
     ];
 
+    // 요금제 등급 순서(다운그레이드/업그레이드 판단용). free < pro < enterprise.
+    private const PLAN_ORDER = ['free' => 0, 'pro' => 1, 'enterprise' => 2];
+
     public function checkout()
     {
         if (! session()->get('isLoggedIn')) {
@@ -33,29 +36,121 @@ class Payment extends BaseController
             return redirect()->to('/pricing')->with('error', '올바르지 않은 요금제입니다.');
         }
 
-        $user         = (new UserModel())->find(session()->get('user_id'));
-        $settingModel = new SettingModel();
-        $amount       = (int) $settingModel->getValue(self::PLAN_PRICE_KEYS[$plan]);
+        $user = (new UserModel())->find(session()->get('user_id'));
 
-        // 주문번호는 짧은 URL 코드와 다르게 "짧고 예측 불가능"할 필요는 없고,
-        // 대신 절대 겹치면 안 되므로 충분히 긴 랜덤값을 씀 (32자리 hex, 사실상 중복 불가능).
+        // 만료된 유료 요금제는(자동으로 무료로 내려가는 로직은 아직 없어서 users.plan엔
+        // 예전 값이 그대로 남아있을 수 있음) 여기서는 "사실상 무료"로 취급해서 판단함.
+        $currentPlan = $this->isPlanActive($user) ? $user['plan'] : 'free';
+
+        if ($plan === $currentPlan) {
+            return redirect()->to('/pricing')->with('error', '이미 이용 중인 요금제입니다.');
+        }
+
+        if (self::PLAN_ORDER[$plan] < self::PLAN_ORDER[$currentPlan]) {
+            return redirect()->to('/pricing')->with('error', '더 낮은 요금제는 다운그레이드 예약을 이용해주세요.');
+        }
+
+        $settingModel = new SettingModel();
+        $fullPrice    = (int) $settingModel->getValue(self::PLAN_PRICE_KEYS[$plan]);
+
+        $proration = $this->calculateUpgradeAmount($user, $plan, $currentPlan, $fullPrice, $settingModel);
+
         $orderId = 'king_' . bin2hex(random_bytes(16));
 
+        // 차액이 0원 이하로 계산되면(잔여 기간이 넉넉해서 상위 요금제 가격을 이미 다 채운 경우)
+        // 토스 결제창을 띄울 필요가 없음 — 실제 결제 없이 바로 적용해준다.
+        if ($proration['amount'] <= 0) {
+            (new PaymentModel())->insert([
+                'user_id'         => $user['id'],
+                'order_id'        => $orderId,
+                'amount'          => 0,
+                'expected_amount' => 0,
+                'plan'            => $plan,
+                'type'            => $proration['type'],
+                'change_note'     => $proration['note'],
+                'status'          => 'completed',
+                'method'          => 'proration_credit',
+                'approved_at'     => date('Y-m-d H:i:s'),
+            ]);
+
+            (new UserModel())->update($user['id'], [
+                'plan'            => $plan,
+                'plan_expires_at' => date('Y-m-d H:i:s', strtotime('+30 days')),
+                'next_plan'       => null,
+                'next_plan_at'    => null,
+            ]);
+
+            return redirect()->to('/payment/history')->with('message', '잔여 기간 차감으로 결제 없이 바로 적용되었습니다.');
+        }
+
         (new PaymentModel())->insert([
-            'user_id'  => $user['id'],
-            'order_id' => $orderId,
-            'amount'   => $amount,
-            'plan'     => $plan,
+            'user_id'         => $user['id'],
+            'order_id'        => $orderId,
+            'amount'          => $proration['amount'],
+            'expected_amount' => $proration['amount'],
+            'plan'            => $plan,
+            'type'            => $proration['type'],
+            'change_note'     => $proration['note'],
             // status는 지정 안 하면 테이블 기본값 'pending'이 자동으로 들어감
         ]);
 
         return view('payment/checkout', [
-            'orderId'      => $orderId,
-            'amount'       => $amount,
-            'planLabel'    => self::PLAN_LABELS[$plan],
-            'customerName' => $user['name'] ?? $user['email'],
-            'clientKey'    => env('tosspayments.clientKey'),
+            'orderId'       => $orderId,
+            'amount'        => $proration['amount'],
+            'planLabel'     => self::PLAN_LABELS[$plan],
+            'customerName'  => $user['name'] ?? $user['email'],
+            'clientKey'     => env('tosspayments.clientKey'),
+            'prorationNote' => $proration['note'],
         ]);
+    }
+
+    private function isPlanActive(array $user): bool
+    {
+        if ($user['plan'] === 'free') {
+            return true;
+        }
+
+        return empty($user['plan_expires_at']) || strtotime($user['plan_expires_at']) > time();
+    }
+
+    // 업그레이드 결제금액을 계산한다.
+    // - 현재 무료(또는 사실상 무료로 취급되는 만료 상태)면: 전액 결제. 이 요금제를 예전에
+    //   결제한 적 있으면 '갱신', 처음이면 '신규'로 분류.
+    // - 현재 유료(더 낮은 등급)면: 잔여일 비례 차액만 결제. '업그레이드'로 분류하고,
+    //   계산 내역을 change_note에 사람이 읽을 수 있는 문장으로 남김.
+    private function calculateUpgradeAmount(array $user, string $targetPlan, string $currentPlan, int $fullPrice, SettingModel $settingModel): array
+    {
+        if ($currentPlan === 'free') {
+            $hadBefore = (new PaymentModel())
+                ->where('user_id', $user['id'])
+                ->where('plan', $targetPlan)
+                ->where('status', 'completed')
+                ->first();
+
+            return [
+                'amount' => $fullPrice,
+                'type'   => $hadBefore ? 'renewal' : 'new',
+                'note'   => null,
+            ];
+        }
+
+        $currentPriceKey = self::PLAN_PRICE_KEYS[$currentPlan] ?? null;
+        $currentPrice    = $currentPriceKey ? (int) $settingModel->getValue($currentPriceKey) : 0;
+
+        $remainingDays = 0;
+        if (! empty($user['plan_expires_at'])) {
+            $remainingDays = max(0, (int) ceil((strtotime($user['plan_expires_at']) - time()) / 86400));
+        }
+
+        // 원 단위 내림. 관리자가 장기간(30일 초과)을 강제로 부여해둔 회원이 업그레이드하면
+        // 차감액이 상위 요금제 가격보다 커질 수 있어서, 결제금액은 0원 아래로는 안 내려가게 막음.
+        $deduction = (int) floor($currentPrice * $remainingDays / 30);
+        $amount    = max(0, $fullPrice - $deduction);
+
+        $currentLabel = self::PLAN_LABELS[$currentPlan] ?? $currentPlan;
+        $note         = "{$currentLabel} 잔여 {$remainingDays}일(" . number_format($deduction) . '원) 차감, ' . number_format($amount) . '원 결제';
+
+        return ['amount' => $amount, 'type' => 'upgrade', 'note' => $note];
     }
 
     public function success()
@@ -67,9 +162,15 @@ class Payment extends BaseController
         $model   = new PaymentModel();
         $payment = $model->where('order_id', $orderId)->first();
 
-        // ① 우리가 3단계에서 미리 저장해둔 주문 기록이 있는지, 금액이 일치하는지부터 확인.
-        //    여기서 걸러야 "결제창 URL을 흉내내서 금액을 조작해 요청하는" 위변조를 막을 수 있음.
-        if (! $payment || (int) $payment['amount'] !== $amount) {
+        // ① 체크아웃 시점에 서버가 계산해서 저장해둔 expected_amount와, 토스가 지금 돌려준
+        //    실제 결제금액이 일치하는지부터 확인. 여기서 걸러야 "결제창 URL을 흉내내서 금액을
+        //    조작해 요청하는" 위변조를 막을 수 있음. (expected_amount가 없는 옛날 레코드는
+        //    amount로 대체 비교 — 이 컬럼 생기기 전에 만들어진 pending 건 대비 안전장치)
+        $expectedAmount = $payment !== null ? (int) ($payment['expected_amount'] ?? $payment['amount']) : null;
+
+        if (! $payment || $expectedAmount !== $amount) {
+            log_message('error', "결제 금액 불일치: orderId={$orderId}, expected=" . ($expectedAmount ?? 'null') . ", actual={$amount}");
+
             return redirect()->to('/payment/fail')->with('error', '결제 정보가 일치하지 않습니다.');
         }
 
@@ -120,9 +221,18 @@ class Payment extends BaseController
         // 엔터프라이즈를 결제해도 프로로 잘못 올라가는 문제가 있었음.
         // plan_expires_at은 "지금부터 1개월"로 기록 — 관리자가 강제로 부여할 때(개월수 입력)와
         // 계산 방식을 통일해서, 결제 내역 화면의 "다음 결제 예정일"이 항상 이 값 하나만 보면 되게 함.
+        // 업그레이드(차액 결제) 건만 예외적으로 "지금부터 30일" — 차액 계산 자체가 30일 기준
+        // (잔여일÷30)이라, 새로 시작하는 기간도 똑같이 30일로 맞춰야 계산이 앞뒤로 맞음.
+        $newExpiresAt = $payment['type'] === 'upgrade'
+            ? date('Y-m-d H:i:s', strtotime('+30 days'))
+            : date('Y-m-d H:i:s', strtotime('+1 month'));
+
+        // 업그레이드 결제가 성공했으니, 혹시 남아있던 다운그레이드 예약은 의미가 없어져서 같이 지움.
         (new UserModel())->update($payment['user_id'], [
             'plan'            => $payment['plan'],
-            'plan_expires_at' => date('Y-m-d H:i:s', strtotime('+1 month')),
+            'plan_expires_at' => $newExpiresAt,
+            'next_plan'       => null,
+            'next_plan_at'    => null,
         ]);
 
         return view('payment/success', ['payment' => $payment]);

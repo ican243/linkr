@@ -161,7 +161,13 @@ class Payments extends BaseController
         ]);
 
         // 정책: 환불되면 그 회원은 자동으로 무료 요금제로 강등됨(무료는 만료일 개념이 없어서 함께 비움).
-        (new UserModel())->update($payment['user_id'], ['plan' => 'free', 'plan_expires_at' => null]);
+        // 남아있던 다운그레이드 예약도 무의미해지므로 같이 지움.
+        (new UserModel())->update($payment['user_id'], [
+            'plan'            => 'free',
+            'plan_expires_at' => null,
+            'next_plan'       => null,
+            'next_plan_at'    => null,
+        ]);
 
         $detail = $isAdminGrantedPayment
             ? "주문 {$payment['order_id']} 취소 처리(실제 토스 결제가 아니라 로컬에서만 처리함) (사유: {$reason}). 회원(user_id={$payment['user_id']})을 무료 요금제로 강등함."
@@ -201,6 +207,8 @@ class Payments extends BaseController
         (new UserModel())->update($payment['user_id'], [
             'plan'            => $payment['plan'],
             'plan_expires_at' => date('Y-m-d H:i:s', strtotime('+1 month')),
+            'next_plan'       => null,
+            'next_plan_at'    => null,
         ]);
 
         (new AdminLogModel())->record(

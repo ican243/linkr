@@ -6,6 +6,8 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Home::index');
 $routes->post('demo-preview', 'Home::previewShorten');
 $routes->get('pricing', 'Pricing::index');
+$routes->post('pricing/downgrade', 'Pricing::scheduleDowngrade');
+$routes->post('pricing/cancel-downgrade', 'Pricing::cancelDowngrade');
 $routes->get('privacy', 'Privacy::index');
 $routes->get('about', 'About::index');
 

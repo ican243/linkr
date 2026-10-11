@@ -9,8 +9,11 @@
               <span><?= esc($planLabel) ?> 요금제 (월간)</span>
               <strong><?= number_format($amount) ?>원</strong>
           </div>
+          <?php if (! empty($prorationNote)) : ?>
+              <div class="text-muted small mt-2 pt-2 border-top"><?= esc($prorationNote) ?></div>
+          <?php endif ?>
       </div>
-  
+
       <button id="pay-button" class="btn btn-primary w-100">결제하기</button>
   </div>
   
