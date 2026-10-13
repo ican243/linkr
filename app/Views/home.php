@@ -3,6 +3,11 @@
 
 <?= $this->section('content') ?>
 
+<?php if (session()->getFlashdata('message')) : ?>
+    <!-- 회원 탈퇴 완료 등, 홈으로 돌아오며 보여줄 안내 -->
+    <div class="alert alert-success mb-4"><?= esc(session()->getFlashdata('message')) ?></div>
+<?php endif ?>
+
 <!-- 히어로 -->
 <div class="king-hero mb-5">
     <div class="row align-items-center g-5">

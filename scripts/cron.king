@@ -9,5 +9,12 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # 매일 04:00 (한국) 체험 계정을 샘플 데이터가 들어있는 처음 상태로 초기화
 0 19 * * * www-data cd /var/www/king && php spark demo:reset >> writable/logs/cron-demo-reset.log 2>&1
 
+# 매일 04:10 (한국) 보관 기간 지난 정보 정리 (개인정보처리방침 3번)
+# 3개월 지난 클릭의 IP·기기 정보 삭제, 5년 지난 결제 기록 삭제, 결제 기록이 다 지워진 탈퇴 회원 삭제
+10 19 * * * www-data cd /var/www/king && php spark privacy:purge >> writable/logs/cron-privacy-purge.log 2>&1
+
+# 매일 04:20 (한국) 로그 정리: 30일 지난 오류 로그 삭제, 너무 커진 크론 기록 줄이기, 지난 횟수 제한 기록 삭제
+20 19 * * * www-data cd /var/www/king && php spark logs:cleanup >> writable/logs/cron-logs-cleanup.log 2>&1
+
 # 매시간 5분: 이용 기간이 끝난 유료 회원을 무료로 전환 (한동안 접속 안 한 회원까지 처리)
 5 * * * * www-data cd /var/www/king && php spark plan:apply-downgrades >> writable/logs/cron-plan-downgrades.log 2>&1

@@ -122,7 +122,7 @@ class Filters extends BaseFilters
         // 체험 계정에서 막을 기능들 (자세한 규칙은 app/Filters/DemoGuardFilter.php)
         'demoGuard' => [
             'before' => [
-                'account',
+                'account', 'account/*',
                 'custom-domain', 'custom-domain/*',
                 'api-keys', 'api-keys/*',
                 'pricing/*',

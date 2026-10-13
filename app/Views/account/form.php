@@ -43,5 +43,30 @@
     </form>
 
     <p class="mt-3"><a href="/dashboard">대시보드로</a></p>
+
+    <!-- 회원 탈퇴 (Account::delete) -->
+    <div class="card border-danger mt-5">
+        <div class="card-body">
+            <h2 class="h6 fw-bold text-danger">회원 탈퇴</h2>
+            <ul class="small text-muted ps-3 mb-3">
+                <li>만든 링크, 클릭 기록, API 키가 <strong>모두 바로 삭제</strong>되며 되돌릴 수 없습니다.</li>
+                <?php if (in_array($user['plan'], ['pro', 'enterprise'], true)) : ?>
+                    <li>남은 유료 이용 기간도 함께 사라집니다.</li>
+                <?php endif ?>
+                <li>결제 기록은 법에 따라 5년 동안 보관되며, 회원 정보와 연결되지 않은 상태로 남습니다.</li>
+            </ul>
+
+            <?php if (! empty($deleteError)) : ?>
+                <div class="alert alert-danger py-2 small"><?= esc($deleteError) ?></div>
+            <?php endif ?>
+
+            <form action="/account/delete" method="post">
+                <?= csrf_field() ?>
+                <label for="confirmDelete" class="form-label small">계속하려면 아래 칸에 <strong>탈퇴</strong>라고 입력하세요.</label>
+                <input type="text" id="confirmDelete" name="confirm" class="form-control mb-2" autocomplete="off" required>
+                <button type="submit" class="btn btn-outline-danger w-100">회원 탈퇴</button>
+            </form>
+        </div>
+    </div>
 </div>
 <?= $this->endSection() ?>

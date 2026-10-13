@@ -63,8 +63,8 @@
                 <?php foreach ($recentLogs as $log) : ?>
                     <tr>
                         <td><?= esc($log['clicked_at']) ?></td>
-                        <td><?= esc($log['ip_address']) ?></td>
-                        <td class="text-truncate" style="max-width:300px;"><?= esc($log['user_agent']) ?></td>
+                        <td><?= esc($log['ip_address'] ?? '—') ?></td>
+                        <td class="text-truncate" style="max-width:300px;"><?= esc($log['user_agent'] ?? '—') ?></td>
                     </tr>
                 <?php endforeach ?>
             </tbody>

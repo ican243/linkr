@@ -7,6 +7,7 @@ use App\Models\AdminLogModel;
 use App\Models\ClickLogModel;
 use App\Models\LinkModel;
 use App\Models\PaymentModel;
+use App\Libraries\AccountDeletion;
 use App\Models\UserModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 
@@ -31,8 +32,9 @@ class Dashboard extends BaseController
         $twoWeeksAgo  = date('Y-m-d H:i:s', strtotime('-14 days'));
         $monthStart   = date('Y-m-01 00:00:00');
 
-        $usersThisWeek = $userModel->where('created_at >=', $weekAgo)->countAllResults();
-        $usersLastWeek = $userModel->where('created_at >=', $twoWeeksAgo)->where('created_at <', $weekAgo)->countAllResults();
+        // 탈퇴 회원(결제 기록 때문에 줄만 남은 익명 회원)은 회원 수에서 뺌
+        $usersThisWeek = $userModel->where('withdrawn_at', null)->where('created_at >=', $weekAgo)->countAllResults();
+        $usersLastWeek = $userModel->where('withdrawn_at', null)->where('created_at >=', $twoWeeksAgo)->where('created_at <', $weekAgo)->countAllResults();
 
         $linksThisWeek = $linkModel->where('created_at >=', $weekAgo)->countAllResults();
         $linksLastWeek = $linkModel->where('created_at >=', $twoWeeksAgo)->where('created_at <', $weekAgo)->countAllResults();
@@ -48,7 +50,7 @@ class Dashboard extends BaseController
         $revenueThisMonthRow = $paymentModel->where('status', 'completed')->where('approved_at >=', $monthStart)->selectSum('amount')->first();
 
         $stats = [
-            'totalUsers'      => $userModel->countAllResults(),
+            'totalUsers'      => $userModel->where('withdrawn_at', null)->countAllResults(),
             'totalLinks'      => $linkModel->countAllResults(),
             'totalClicks'     => $clickLogModel->countAllResults(),
             'monthlyRevenue'  => (int) ($revenueThisMonthRow['amount'] ?? 0),
@@ -64,7 +66,8 @@ class Dashboard extends BaseController
         $clickTrend = $this->clickTrendLast7Days();
 
         $recentPayments = $paymentModel
-            ->select('payments.*, users.email AS user_email')
+            // 탈퇴 회원의 결제 기록은 익명 이메일 대신 "탈퇴한 회원"으로 표시
+            ->select("payments.*, IF(users.withdrawn_at IS NULL, users.email, '탈퇴한 회원') AS user_email", false)
             ->join('users', 'users.id = payments.user_id')
             ->orderBy('payments.created_at', 'DESC')
             ->findAll(5);
@@ -125,7 +128,7 @@ class Dashboard extends BaseController
     public function members()
     {
         $q     = trim((string) $this->request->getGet('q'));
-        $model = new UserModel();
+        $model = (new UserModel())->where('withdrawn_at', null);
 
         if ($q !== '') {
             $model->like('email', $q);
@@ -336,8 +339,8 @@ class Dashboard extends BaseController
 
     public function deleteUser(int $id)
     {
-        $model = new UserModel();
-        $model->delete($id); // 그 회원의 links/click_logs도 FK CASCADE로 같이 삭제됨
+        // 회원 탈퇴와 같은 규칙: 링크·클릭 기록·API 키는 삭제, 결제 기록은 5년 보관(회원은 익명화)
+        AccountDeletion::delete($id);
 
         return redirect()->to('/admin/members')->with('message', '회원이 삭제되었습니다.');
     }

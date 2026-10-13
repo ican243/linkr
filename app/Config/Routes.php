@@ -78,6 +78,8 @@ $routes->get('dashboard', '\App\Controllers\User\Dashboard::index');
 // 계정 관리 (이름 수정, 비밀번호 변경)
 $routes->get('account', 'Account::form');
 $routes->post('account', 'Account::update');
+// 회원 탈퇴 (계정 설정 화면 맨 아래)
+$routes->post('account/delete', 'Account::delete');
 
 // 커스텀 도메인 설정 (로그인 필요). 'custom-domain'은 1단계 경로라 아래
 // 와일드카드보다 반드시 위에 있어야 함.

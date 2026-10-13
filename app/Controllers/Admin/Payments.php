@@ -26,7 +26,8 @@ class Payments extends BaseController
         $dateTo   = $this->request->getGet('date_to');
 
         $model = (new PaymentModel())
-            ->select('payments.*, users.email AS user_email')
+            // 탈퇴 회원의 결제 기록은 익명 이메일 대신 "탈퇴한 회원"으로 표시
+            ->select("payments.*, IF(users.withdrawn_at IS NULL, users.email, '탈퇴한 회원') AS user_email", false)
             ->join('users', 'users.id = payments.user_id')
             ->orderBy('payments.created_at', 'DESC');
 
