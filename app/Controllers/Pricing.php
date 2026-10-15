@@ -22,6 +22,7 @@ class Pricing extends BaseController
             'freeLinkLimit'   => (int) $model->getValue('free_plan_link_limit', '100'),
             'proPrice'        => (int) $model->getValue('pro_plan_price', '33000'),
             'enterprisePrice' => (int) $model->getValue('enterprise_plan_price', '79800'),
+            'freeExpiryDays'  => Link::FREE_PLAN_MAX_EXPIRY_DAYS,
             'user'            => $user,
         ]);
     }

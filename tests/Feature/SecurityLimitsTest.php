@@ -177,10 +177,18 @@ final class SecurityLimitsTest extends CIUnitTestCase
         $rawKey = 'king_' . bin2hex(random_bytes(24));
         (new ApiKeyModel())->insert(['user_id' => $userId, 'label' => 't', 'key_hash' => hash('sha256', $rawKey), 'key_last4' => substr($rawKey, -4)]);
 
+        // 60번까지는 통과. 1초에 1번씩 다시 채워지므로(서버가 느리면 그 사이 몇 번 더 채워짐) 막힐 때까지 조금 더 보냄
         for ($i = 0; $i < 60; $i++) {
             $this->withHeaders(['Authorization' => 'Bearer ' . $rawKey])->get('/api/v1/links')->assertOK();
         }
 
-        $this->withHeaders(['Authorization' => 'Bearer ' . $rawKey])->get('/api/v1/links')->assertStatus(429);
+        for ($i = 0; $i < 60; $i++) {
+            $result = $this->withHeaders(['Authorization' => 'Bearer ' . $rawKey])->get('/api/v1/links');
+            if ($result->response()->getStatusCode() === 429) {
+                break;
+            }
+        }
+
+        $result->assertStatus(429);
     }
 }

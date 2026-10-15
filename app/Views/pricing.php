@@ -57,9 +57,7 @@ $planState = static function (string $plan) use ($currentPlan, $planOrder): stri
         💳 카드 없어도 무료로 바로 시작할 수 있어요. 유료 요금제는 언제든 해지 가능합니다.
     </div>
 <?php endif ?>
-<div class="alert alert-warning text-center small">
-    ⚠️나에게 맞는 요금제를 선택하고 Linkr의 모든 기능을 활용해보세요️⚠️
-</div>
+<p class="text-center text-muted mb-4">나에게 맞는 요금제를 선택하고 Linkr의 모든 기능을 활용해보세요.</p>
 
 <!-- 요금제 카드 -->
 <div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
@@ -74,7 +72,8 @@ $planState = static function (string $plan) use ($currentPlan, $planOrder): stri
                 <li>✔ QR 코드</li>
                 <li>✔ 기본 클릭 통계 (7일 보관)</li>
                 <li>✖ 커스텀 도메인</li>
-                <li>✖ 비밀번호 보호 / 만료일</li>
+                <li>✔ 만료일 설정 (최대 <?= $freeExpiryDays ?>일)</li>
+                <li>✖ 비밀번호 보호</li>
             </ul>
             <?php $freeState = $planState('free'); ?>
             <?php if ($isLoggedIn && $freeState === 'current') : ?>
@@ -107,7 +106,8 @@ $planState = static function (string $plan) use ($currentPlan, $planOrder): stri
             <ul class="list-unstyled small text-muted flex-grow-1">
                 <li>✔ 무제한 링크</li>
                 <li>✔ 커스텀 도메인 1개</li>
-                <li>✔ 비밀번호 보호 / 만료일</li>
+                <li>✔ 비밀번호 보호</li>
+                <li>✔ 만료일 자유 설정 (기한 없음 가능)</li>
                 <li>✔ 고급 통계, CSV 내보내기</li>
             </ul>
             <?php $proState = $planState('pro'); ?>
@@ -165,7 +165,8 @@ $planState = static function (string $plan) use ($currentPlan, $planOrder): stri
         <tbody>
             <tr><td class="text-start">월 링크 생성</td><td><?= number_format($freeLinkLimit) ?>개</td><td>무제한</td><td>무제한</td></tr>
             <tr><td class="text-start">QR 코드</td><td>✔</td><td>✔</td><td>✔</td></tr>
-            <tr><td class="text-start">비밀번호 보호 / 만료일</td><td>✖</td><td>✔</td><td>✔</td></tr>
+            <tr><td class="text-start">비밀번호 보호</td><td>✖</td><td>✔</td><td>✔</td></tr>
+            <tr><td class="text-start">만료일 설정</td><td>최대 <?= $freeExpiryDays ?>일</td><td>제한 없음</td><td>제한 없음</td></tr>
             <tr><td class="text-start">커스텀 도메인</td><td>✖</td><td>1개</td><td>1개</td></tr>
             <tr><td class="text-start">클릭 통계 보관기간</td><td>7일</td><td>무제한</td><td>무제한</td></tr>
             <tr><td class="text-start">CSV 내보내기</td><td>✖</td><td>✔</td><td>✔</td></tr>
