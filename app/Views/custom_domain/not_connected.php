@@ -14,7 +14,11 @@
 <body>
 <div class="box">
     <h1>연결되지 않은 도메인입니다</h1>
-    <p><?= esc($host ?? '') ?> 은(는) Linkr 서비스에 연결된 도메인이 아닙니다.</p>
+    <?php if (($host ?? '') !== '') : ?>
+        <p><?= esc($host) ?> 은(는) Linkr 서비스에 연결된 도메인이 아닙니다.</p>
+    <?php else : ?>
+        <p>Linkr 서비스에 연결된 도메인으로 접속해 주세요.</p>
+    <?php endif ?>
 </div>
 </body>
 </html>

@@ -33,13 +33,19 @@ class CustomDomainFilter implements FilterInterface
         return preg_replace('/:\d+$/', '', $host);
     }
 
-    // 우리 도메인으로 들어온 요청인지. Host를 알 수 없는 경우(테스트 등 실제 브라우저 요청이 아닌
-    // 컨텍스트)는 우리 도메인으로 간주 — 안전한 기본값.
+    // 우리 도메인으로 들어온 요청인지.
+    // Host가 비어 있으면: 웹서버를 거치지 않은 요청(테스트 등)만 우리 도메인으로 간주.
+    // 웹서버(nginx)를 거친 실제 요청인데 Host가 없는 건 HTTP/1.0 봇/스캐너뿐이라, 미등록 도메인과 똑같이 안내 페이지로 보냄.
+    // (예전엔 통과시켜서, http 요청에 일반 404 화면이 Secure 쿠키를 보내려다 500 오류가 났음)
     public static function isOwnHost(RequestInterface $request): bool
     {
         $host = self::hostOf($request);
 
-        return $host === '' || $host === self::OWN_HOST;
+        if ($host === '') {
+            return (string) $request->getServer('GATEWAY_INTERFACE') === '';
+        }
+
+        return $host === self::OWN_HOST;
     }
 
     public function before(RequestInterface $request, $arguments = null)

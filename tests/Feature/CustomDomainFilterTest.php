@@ -24,6 +24,23 @@ final class CustomDomainFilterTest extends CIUnitTestCase
         $result->assertSee('연결되지 않은 도메인입니다');
     }
 
+    // Host 없이 웹서버를 거쳐 들어온 요청(HTTP/1.0 스캐너 등)은 500 오류가 아니라 안내 페이지(404)여야 함
+    public function testRequestWithoutHostThroughWebServerShowsNotConnectedPage(): void
+    {
+        // 실제 웹서버(nginx)를 거친 요청처럼 보이게 함. 다른 테스트에 남지 않도록 끝나면 바로 지움
+        service('superglobals')->setServer('GATEWAY_INTERFACE', 'CGI/1.1');
+
+        try {
+            $result = $this->withHeaders(['Host' => ''])->get('/setup.cgi');
+        } finally {
+            service('superglobals')->unsetServer('GATEWAY_INTERFACE');
+        }
+
+        $result->assertStatus(404);
+        $result->assertSee('연결되지 않은 도메인입니다');
+        $result->assertSee('Linkr 서비스에 연결된 도메인으로 접속해 주세요.');
+    }
+
     public function testVerifiedCustomDomainPassesThroughToNormalRouting(): void
     {
         $userId = (new UserModel())->insert([
